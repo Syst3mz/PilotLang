@@ -10,7 +10,7 @@ namespace PilotLang
         {
 
             var toks = PilotTokenizer.Tokenize(File.OpenRead("test.pil"));
-            //var ast = PilotAst.BuildAbstractSyntaxTree(toks);
+            var ast = PilotAst.BuildAbstractSyntaxTree(toks);
             return;
         }
     }

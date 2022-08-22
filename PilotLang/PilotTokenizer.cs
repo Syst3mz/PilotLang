@@ -133,7 +133,7 @@ namespace PilotLang
             }
             else
             {
-                ret = new TextToken(TokenType.Identifier, input);
+                ret = new IdentifierToken(TokenType.Identifier, input);
             }
             
             return ret;

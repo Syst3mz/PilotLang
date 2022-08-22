@@ -3,7 +3,7 @@ using PilotLang.Tokens;
 
 namespace PilotLang
 {
-    /*public interface IAstPart
+    public interface IAstPart
     {
         
     }
@@ -31,11 +31,11 @@ namespace PilotLang
     public struct FunctionAstPart : IAstPart
     {
         public IAstType ReturnType;
-        public Identifier FunctionName;
-        public List<(Identifier, IAstType)> Arguments;
+        public IdentifierToken FunctionName;
+        public List<(IdentifierToken, IAstType)> Arguments;
         public BlockAstPart FuncBody;
 
-        public FunctionAstPart(IAstType returnType, Identifier functionName, List<(Identifier, IAstType)> arguments, BlockAstPart funcBody)
+        public FunctionAstPart(IAstType returnType, IdentifierToken functionName, List<(IdentifierToken, IAstType)> arguments, BlockAstPart funcBody)
         {
             ReturnType = returnType;
             FunctionName = functionName;
@@ -51,9 +51,9 @@ namespace PilotLang
 
     public struct SimpleType : IAstType
     {
-        public Identifier TypeName;
+        public IdentifierToken TypeName;
 
-        public SimpleType(Identifier typeName)
+        public SimpleType(IdentifierToken typeName)
         {
             TypeName = typeName;
         }
@@ -102,9 +102,9 @@ namespace PilotLang
     
     public struct IdentifierAstPart : IAstTerminal
     {
-        public Identifier Token;
+        public IdentifierToken Token;
 
-        public IdentifierAstPart(Identifier token)
+        public IdentifierAstPart(IdentifierToken token)
         {
             Token = token;
         }
@@ -112,11 +112,11 @@ namespace PilotLang
     
     public struct IntegerAstPart : IAstTerminal
     {
-        public Integer Token;
+        public IntegerToken Token;
 
-        public IntegerAstPart(Integer token)
+        public IntegerAstPart(IntegerToken token)
         {
             Token = token;
         }
-    }*/
+    }
 }

@@ -69,12 +69,12 @@ namespace PilotLang.Tokens
       }
    }
 
-   public struct TextToken : IToken
+   public struct IdentifierToken : IToken
    {
       public TokenType Type { get; }
       public string Text;
 
-      public TextToken(TokenType type, string text)
+      public IdentifierToken(TokenType type, string text)
       {
          Type = type;
          Text = text;

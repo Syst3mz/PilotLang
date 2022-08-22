@@ -1,97 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using PilotLang.Tokens;
 
 namespace PilotLang
 {
-    /*public static class PilotAst
+    public static class PilotAst
     {
         // Make my own token stream sensibly
-        private static bool Done;
-        private static IToken Current
-        {
-            get => _tokens[_positionInArray];
-        }
-        private static int _positionInArray = 0;
-        private static List<IToken> _tokens;
-
-
-        private static bool CTokMatches(Type t)
-        {
-            if (Current.GetType() == t)
-            {
-                GetNextToken();
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool CTokIs(Type t)
-        {
-            if (Current.GetType() == t)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static IToken GetNextToken()
-        {
-            Advance();
-            return Current;
-        }
-        
-        private static void Advance()
-        {
-            if (_positionInArray + 1 >= _tokens.Count)
-            {
-                Done = true;
-            }
-            else
-            {
-                _positionInArray++;
-            }
-        }
-
-        private static void Reset()
-        {
-            _positionInArray = 0;
-        }
+        private static IEnumerator<IToken> _tokens;
+        private static bool _done = false;
+        private static IToken _current { get => _tokens.Current; }
 
         // Actually parse
-        public static List<AstTopLevel> BuildAbstractSyntaxTree(List<IToken> tokens)
+        public static List<AstTopLevel> BuildAbstractSyntaxTree(IEnumerable<IToken> tokens)
         {
-            // Make a root node
-            _tokens = tokens;
-            
-            var roots = ParseFile();
-            return roots;
-        }
-
-        private static List<AstTopLevel> ParseFile()
-        {
-            List<AstTopLevel> roots = new List<AstTopLevel>();
-            while (!Done)
+            _tokens = tokens.GetEnumerator();
+            List<AstTopLevel> ret = new List<AstTopLevel>();
+            foreach (AstTopLevel level in ParseFile())
             {
-                if (CTokMatches(typeof(Function)))
-                {
-                    roots.Add(new AstTopLevel(ParseFunction()));
-                }
-                else
-                {
-                    Advance();
-                }
-                
+                ret.Add(level);
             }
 
-            return roots;
+            return ret;
+        }
+
+        private static bool Match(TokenType t)
+        {
+            if (_current.Type == t)
+            {
+                Advance();
+                return true;
+            }
+
+            return false;
+        }
+        
+        private static bool Expect(TokenType t)
+        {
+            if (_current.Type == t)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void Advance()
+        {
+            _tokens.MoveNext();
+            if (_current == null)
+            {
+                _done = false;
+            }
+        }
+        
+        private static IEnumerable<AstTopLevel> ParseFile()
+        {
+            while (_done)
+            {
+                if (Match(TokenType.Function))
+                {
+                    yield return new AstTopLevel(ParseFunction());
+                }
+                
+                Advance();
+            }
         }
 
         private static FunctionAstPart ParseFunction()
         {
-            if (!CTokIs(typeof(Identifier)))
+            if (!Expect(TokenType.Identifier))
             {
                 //error case
                 throw new Exception("fn should be followed by an identifier");
@@ -100,28 +79,28 @@ namespace PilotLang
             var retType = ParseType();
             
             
-            if (!CTokIs(typeof(Identifier)))
+            if (!Expect(TokenType.Identifier))
             {
                 throw new Exception("Function must have a name");
             }
 
-            var funcName = (Identifier)Current;
+            var funcName = (IdentifierToken)_current;
             Advance();
             
-            if (!CTokMatches(typeof(LeftParen)))
+            if (!Match(TokenType.LeftParentheses))
             {
                 throw new Exception("A function name must be followed by its arguments");
             }
             
-            List<(Identifier, IAstType)> argList = ParseArgList();
+            List<(IdentifierToken, IAstType)> argList = ParseArgList();
 
-            if (!CTokMatches(typeof(LeftBrace)))
+            if (!Match(TokenType.LeftBrace))
             {
                 throw new Exception("A function must have a body");
             }
 
             List<IAstPart> funcBlock = new List<IAstPart>();
-            while (!CTokMatches(typeof(RightBrace)))
+            while (!Match(TokenType.RightBrace))
             {
                 funcBlock.Add(ParseExpr());
             }
@@ -134,12 +113,12 @@ namespace PilotLang
             // check if there *is* a return statement
             while (true)
             {
-                if (CTokMatches(typeof(Return)))
+                if (Match(TokenType.Return))
                 {
                     return ParseReturnStatement();    
                 }
 
-                if (CTokMatches(typeof(Identifier)) || CTokMatches(typeof(Integer)))
+                if (Match(TokenType.Identifier) || Match(TokenType.Integer))
                 {
                     return ParseAstTerminal();
                 }
@@ -148,14 +127,14 @@ namespace PilotLang
 
         private static IAstExpr ParseAstTerminal()
         {
-            if (CTokIs(typeof(Integer)))
+            if (Expect(TokenType.Integer))
             {
-                var ret = (Integer)Current;
+                var ret = (IntegerToken)_current;
                 Advance();
                 return new IntegerAstPart(ret);
             }
             
-            if (CTokIs(typeof(Identifier)))
+            if (Expect(typeof(Identifier)))
             {
                 var ret = (Identifier)Current;
                 Advance();
@@ -171,23 +150,23 @@ namespace PilotLang
         }
 
 
-        private static List<(Identifier, IAstType)> ParseArgList()
+        private static List<(IdentifierToken, IAstType)> ParseArgList()
         {
-            List<(Identifier, IAstType)> argList = new List<(Identifier, IAstType)>();
-            if (CTokIs(typeof(RightParen)))
+            List<(IdentifierToken, IAstType)> argList = new List<(IdentifierToken, IAstType)>();
+            if (Expect(TokenType.RightParentheses))
             {
                 return argList;
             }
-            while (CTokIs(typeof(Identifier)))
+            while (Expect(TokenType.Identifier))
             {
-                var argName = (Identifier) Current;
+                var argName = (IdentifierToken) _current;
                 Advance();
-                if (CTokIs(typeof(Identifier)))
+                if (Expect(TokenType.Identifier))
                 {
                     argList.Add((argName, ParseType()));
-                    if (!CTokMatches(typeof(Coma)))
+                    if (!Match(TokenType.Coma))
                     {
-                        if (CTokMatches(typeof(RightParen)))
+                        if (Match(TokenType.RightParentheses))
                         {
                             return argList;
                         }
@@ -254,6 +233,5 @@ namespace PilotLang
             Advance();
             return ret;
         }
-
-    }*/
+    }
 }
