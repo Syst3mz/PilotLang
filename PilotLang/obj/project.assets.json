@@ -1,0 +1,222 @@
+{
+  "version": 3,
+  "targets": {
+    "net5.0": {
+      "libLLVM/14.0.0": {
+        "type": "package"
+      },
+      "LLVMSharp/14.0.0-beta1": {
+        "type": "package",
+        "dependencies": {
+          "LLVMSharp.Interop": "14.0.0-beta1",
+          "Microsoft.Bcl.HashCode": "1.1.1",
+          "System.Memory": "4.5.4",
+          "libLLVM": "14.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/LLVMSharp.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/LLVMSharp.dll": {}
+        }
+      },
+      "LLVMSharp.Interop/14.0.0-beta1": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl.HashCode": "1.1.1",
+          "System.Memory": "4.5.4",
+          "libLLVM": "14.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/LLVMSharp.Interop.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/LLVMSharp.Interop.dll": {}
+        }
+      },
+      "Microsoft.Bcl.HashCode/1.1.1": {
+        "type": "package",
+        "compile": {
+          "ref/netcoreapp2.1/Microsoft.Bcl.HashCode.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.1/Microsoft.Bcl.HashCode.dll": {}
+        }
+      },
+      "System.Memory/4.5.4": {
+        "type": "package",
+        "compile": {
+          "ref/netcoreapp2.1/_._": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.1/_._": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "libLLVM/14.0.0": {
+      "sha512": "aEJxx/U1s5lIMJj0XA5zIjYWW0CiPym+DyqjkQnLGrHauYbRibfqyYz38H8z5vDXHjSnvCBLIIUQAaY6+w0aXA==",
+      "type": "package",
+      "path": "libllvm/14.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "libllvm.14.0.0.nupkg.sha512",
+        "libllvm.nuspec",
+        "runtime.json"
+      ]
+    },
+    "LLVMSharp/14.0.0-beta1": {
+      "sha512": "mtaQwMSiMAZvNVMyVxFTw7lTzRYvdCbO6XeplwwviGeeAysQsFdtCNKYejvW0Df7tYIVZgqnvD+BlPX+KNZg7w==",
+      "type": "package",
+      "path": "llvmsharp/14.0.0-beta1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net6.0/LLVMSharp.dll",
+        "lib/netstandard2.0/LLVMSharp.dll",
+        "llvmsharp.14.0.0-beta1.nupkg.sha512",
+        "llvmsharp.nuspec"
+      ]
+    },
+    "LLVMSharp.Interop/14.0.0-beta1": {
+      "sha512": "ChFvfuiSKI+FPejRtQ8Y1iLzAJ0oXY2wMAody1cjHsJ5rRhhcslFV9Ho40sNeLQjeJNOiMWgsngCyx5dD4tkaw==",
+      "type": "package",
+      "path": "llvmsharp.interop/14.0.0-beta1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net6.0/LLVMSharp.Interop.dll",
+        "lib/netstandard2.0/LLVMSharp.Interop.dll",
+        "llvmsharp.interop.14.0.0-beta1.nupkg.sha512",
+        "llvmsharp.interop.nuspec"
+      ]
+    },
+    "Microsoft.Bcl.HashCode/1.1.1": {
+      "sha512": "MalY0Y/uM/LjXtHfX/26l2VtN4LDNZ2OE3aumNOHDLsT4fNYy2hiHXI4CXCqKpNUNm7iJ2brrc4J89UdaL56FA==",
+      "type": "package",
+      "path": "microsoft.bcl.hashcode/1.1.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net461/Microsoft.Bcl.HashCode.dll",
+        "lib/net461/Microsoft.Bcl.HashCode.xml",
+        "lib/netcoreapp2.1/Microsoft.Bcl.HashCode.dll",
+        "lib/netcoreapp2.1/Microsoft.Bcl.HashCode.xml",
+        "lib/netstandard2.0/Microsoft.Bcl.HashCode.dll",
+        "lib/netstandard2.0/Microsoft.Bcl.HashCode.xml",
+        "lib/netstandard2.1/Microsoft.Bcl.HashCode.dll",
+        "lib/netstandard2.1/Microsoft.Bcl.HashCode.xml",
+        "microsoft.bcl.hashcode.1.1.1.nupkg.sha512",
+        "microsoft.bcl.hashcode.nuspec",
+        "ref/net461/Microsoft.Bcl.HashCode.dll",
+        "ref/netcoreapp2.1/Microsoft.Bcl.HashCode.dll",
+        "ref/netstandard2.0/Microsoft.Bcl.HashCode.dll",
+        "ref/netstandard2.1/Microsoft.Bcl.HashCode.dll",
+        "useSharedDesignerContext.txt",
+        "version.txt"
+      ]
+    },
+    "System.Memory/4.5.4": {
+      "sha512": "1MbJTHS1lZ4bS4FmsJjnuGJOu88ZzTT2rLvrhW7Ygic+pC0NWA+3hgAen0HRdsocuQXCkUTdFn9yHJJhsijDXw==",
+      "type": "package",
+      "path": "system.memory/4.5.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net461/System.Memory.dll",
+        "lib/net461/System.Memory.xml",
+        "lib/netcoreapp2.1/_._",
+        "lib/netstandard1.1/System.Memory.dll",
+        "lib/netstandard1.1/System.Memory.xml",
+        "lib/netstandard2.0/System.Memory.dll",
+        "lib/netstandard2.0/System.Memory.xml",
+        "ref/netcoreapp2.1/_._",
+        "system.memory.4.5.4.nupkg.sha512",
+        "system.memory.nuspec",
+        "useSharedDesignerContext.txt",
+        "version.txt"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net5.0": [
+      "LLVMSharp >= 14.0.0-beta1"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\ethan\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\dev\\Csharp\\PilotLang\\PilotLang\\PilotLang.csproj",
+      "projectName": "PilotLang",
+      "projectPath": "C:\\dev\\Csharp\\PilotLang\\PilotLang\\PilotLang.csproj",
+      "packagesPath": "C:\\Users\\ethan\\.nuget\\packages\\",
+      "outputPath": "C:\\dev\\Csharp\\PilotLang\\PilotLang\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\ethan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net5.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://nuget.emzi0767.com/api/v3/index.json": {}
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net5.0": {
+        "targetAlias": "net5.0",
+        "dependencies": {
+          "LLVMSharp": {
+            "target": "Package",
+            "version": "[14.0.0-beta1, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400-preview.21328.4\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+﻿fn int main(inp string<thing, thing2>[][]) {
+    return 0;
+}
