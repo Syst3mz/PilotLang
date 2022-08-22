@@ -4,7 +4,7 @@ using PilotLang.Tokens;
 
 namespace PilotLang
 {
-    public static class PilotAst
+    /*public static class PilotAst
     {
         // Make my own token stream sensibly
         private static bool Done;
@@ -255,5 +255,5 @@ namespace PilotLang
             return ret;
         }
 
-    }
+    }*/
 }

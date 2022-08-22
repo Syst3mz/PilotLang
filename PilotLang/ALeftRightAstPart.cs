@@ -1,5 +1,6 @@
 ﻿namespace PilotLang
 {
+    /*
     public abstract class ALeftRightAstPart : IAstPart
     {
         public IAstPart Left, Right;
@@ -34,5 +35,5 @@
         public EqualAstPart(IAstPart left, IAstPart right) : base(left, right)
         {
         }
-    }
+    }*/
 }

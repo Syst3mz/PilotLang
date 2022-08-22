@@ -3,7 +3,7 @@ using PilotLang.Tokens;
 
 namespace PilotLang
 {
-    public interface IAstPart
+    /*public interface IAstPart
     {
         
     }
@@ -118,5 +118,5 @@ namespace PilotLang
         {
             Token = token;
         }
-    }
+    }*/
 }
