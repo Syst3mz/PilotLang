@@ -11,6 +11,7 @@ namespace PilotLang
     {
         private static Dictionary<string, TokenType> _forward;
         private static Dictionary<TokenType, string> _backward;
+        private static StreamReader _rawStream;
         private static void GetSimpleLookupTable()
         {
             var enumType = typeof(TokenType);
@@ -27,7 +28,7 @@ namespace PilotLang
                 // we can then attempt to retrieve the    
                 // description attribute from the member info    
                 var stringRepresentationAttribute =    
-                    memberInfo.GetCustomAttribute<StringRepresentationAttribute>();    
+                    memberInfo.GetCustomAttribute<StringRepresentationAttribute>();
      
                 // if we find the attribute we can access its values    
                 if (stringRepresentationAttribute != null)    
@@ -38,29 +39,140 @@ namespace PilotLang
             }
         }
         
+        private static string _inputBuffer = "";
+        
         public static IEnumerable<IToken> Tokenize(FileStream fs)
         {
             // Use reflection to go grab the the simple tokens
             GetSimpleLookupTable();
-            
-            StreamReader sr = new StreamReader(fs);
-            string inputBuffer = "";
-            while (!sr.EndOfStream)
+
+            _rawStream = new StreamReader(fs);
+            while (!_rawStream.EndOfStream)
             {
-                char nextChar = (char)sr.Read();
+                var nextChar = GetNextChar();
                 if (!char.IsWhiteSpace(nextChar))
                 {
-                    if (Compare(TokenType.EndOfPhrase, nextChar))
+                    if (Compare(TokenType.LesserThan, nextChar))
                     {
-                        
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.Assign))
+                        {
+                            yield return new StaticToken(TokenType.LesserThanOrEqualTo);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.LesserThan);
+                        }
+                    }
+                    else if (Compare(TokenType.GreaterThan, nextChar))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.Assign))
+                        {
+                            yield return new StaticToken(TokenType.GreaterThanOrEqualTo);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.GreaterThan);
+                        }
+                    }
+                    else if (_forward.ContainsKey(nextChar + ""))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        yield return new StaticToken(_forward[nextChar+""]);
+                    }
+                    else
+                    {
+                        _inputBuffer += nextChar;
+                    }
+                }
+                else
+                {
+                    if (_inputBuffer.Length > 0)
+                    {
+                        yield return TokenizeInputBuffer();
                     }
                 }
             }
         }
 
+        private static IToken TokenizeInputBuffer()
+        {
+            if (_inputBuffer.Length > 0)
+            {
+                var ret = TokenizeString(_inputBuffer);
+                _inputBuffer = "";
+                return ret;
+            }
+
+            return null;
+        }
+
+        private static IToken TokenizeString(string input)
+        {
+            if (input.Length < 1)
+            {
+                throw new ArgumentException($"Input to {nameof(TokenizeString)} must contain some characters");
+            }
+            IToken ret;
+            if (_forward.ContainsKey(input))
+            {
+                ret = new StaticToken(_forward[input]);
+            }else if (char.IsDigit(input[0]))
+            {
+                ret = new IntegerToken(TokenType.Integer, int.Parse(input));
+            }
+            else
+            {
+                ret = new TextToken(TokenType.Identifier, input);
+            }
+            
+            return ret;
+        }
+
+        private static char GetNextChar()
+        {
+            return (char)_rawStream.Read();
+        }
+        
+        private static char ViewNextChar()
+        {
+            return (char)_rawStream.Peek();
+        }
+
+        private static bool MatchNextChar(char c)
+        {
+            if (ViewNextChar() == c)
+            {
+                GetNextChar();
+                return true;
+            }
+
+            return false;
+        }
+        private static bool MatchNextChar(TokenType t)
+        {
+            if (ViewNextChar() == _backward[t][0])
+            {
+                GetNextChar();
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool Compare(TokenType t, char c)
         {
-            return _backward[TokenType.EndOfPhrase] == "" + c;
+            return _backward[t] == "" + c;
         }
     }
 }

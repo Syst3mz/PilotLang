@@ -18,9 +18,13 @@ namespace PilotLang.Tokens
       [StringRepresentation("fn")]
       Function,
       [StringRepresentation("<")]
-      GreaterThan,
-      [StringRepresentation(">")]
       LesserThan,
+      [StringRepresentation("=")]
+      Assign,
+      [StringRepresentation(">")]
+      GreaterThan,
+      LesserThanOrEqualTo,
+      GreaterThanOrEqualTo,
       [StringRepresentation("[")]
       LeftBracket,
       [StringRepresentation("]")]
@@ -29,12 +33,18 @@ namespace PilotLang.Tokens
       LeftBrace,
       [StringRepresentation("}")]
       RightBrace,
+      [StringRepresentation("(")]
+      LeftParentheses,
+      [StringRepresentation(")")]
+      RightParentheses,
       [StringRepresentation(";")]
       EndOfPhrase,
       [StringRepresentation("return")]
       Return,
-      [StringRepresentation("dot")]
+      [StringRepresentation(".")]
       Dot,
+      [StringRepresentation(",")]
+      Coma,
       Identifier,
       Integer
    }
@@ -42,6 +52,21 @@ namespace PilotLang.Tokens
    public interface IToken
    {
       public TokenType Type { get; }
+   }
+
+   public struct StaticToken : IToken
+   {
+      public TokenType Type { get; }
+
+      public StaticToken(TokenType type)
+      {
+         Type = type;
+      }
+
+      public override string ToString()
+      {
+         return Type.ToString();
+      }
    }
 
    public struct TextToken : IToken
@@ -54,7 +79,11 @@ namespace PilotLang.Tokens
          Type = type;
          Text = text;
       }
-      
+
+      public override string ToString()
+      {
+         return $"{Type}: {Text}";
+      }
    }
 
    public struct IntegerToken : IToken
@@ -67,6 +96,11 @@ namespace PilotLang.Tokens
          Number = number;
          Type = type;
          
+      }
+      
+      public override string ToString()
+      {
+         return $"{Type}: {Number}";
       }
    }
 }
