@@ -45,6 +45,14 @@ namespace PilotLang.Tokens
       Dot,
       [StringRepresentation(",")]
       Coma,
+      [StringRepresentation("+")]
+      Plus,
+      [StringRepresentation("-")]
+      Minus,
+      [StringRepresentation("*")]
+      Multiply,
+      [StringRepresentation("/")]
+      Devide,
       Identifier,
       Integer
    }

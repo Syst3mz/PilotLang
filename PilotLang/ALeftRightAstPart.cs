@@ -1,39 +1,27 @@
 ﻿namespace PilotLang
 {
-    /*
-    public abstract class ALeftRightAstPart : IAstPart
+    public enum TwoUnitOperatorType
     {
-        public IAstPart Left, Right;
-        public ALeftRightAstPart(IAstPart left, IAstPart right)
+        LesserThan,
+        Leq,
+        GreaterThan,
+        Geq,
+        Plus,
+        Minus,
+        Multiply,
+        Devide
+    }
+
+    public struct TwoUnitOperator
+    {
+        public IAstExpr Left, Right;
+        public TwoUnitOperatorType Type;
+
+        public TwoUnitOperator(IAstExpr left, IAstExpr right, TwoUnitOperatorType type)
         {
             Left = left;
             Right = right;
+            Type = type;
         }
     }
-
-    public class AssignmentAstPart : ALeftRightAstPart
-    {
-        public AssignmentAstPart(IAstPart left, IAstPart right) : base(left, right)
-        {
-        }
-    }
-    public class AddAstPart : ALeftRightAstPart
-    {
-        public AddAstPart(IAstPart left, IAstPart right) : base(left, right)
-        {
-        }
-    }
-    public class MultiplyAstPart : ALeftRightAstPart
-    {
-        public MultiplyAstPart(IAstPart left, IAstPart right) : base(left, right)
-        {
-        }
-    }
-
-    public class EqualAstPart : ALeftRightAstPart
-    {
-        public EqualAstPart(IAstPart left, IAstPart right) : base(left, right)
-        {
-        }
-    }*/
 }

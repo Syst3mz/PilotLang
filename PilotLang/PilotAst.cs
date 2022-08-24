@@ -8,14 +8,15 @@ namespace PilotLang
     public static class PilotAst
     {
         // Make my own token stream sensibly
-        private static IEnumerator<IToken> _tokens;
+        private static List<IToken> _tokens;
         private static bool _done = false;
-        private static IToken _current { get => _tokens.Current; }
+        private static IToken _current { get => _tokens[_positionInTokenArray]; }
+        private static int _positionInTokenArray = 0;
 
         // Actually parse
         public static List<AstTopLevel> BuildAbstractSyntaxTree(IEnumerable<IToken> tokens)
         {
-            _tokens = tokens.GetEnumerator();
+            _tokens = tokens.ToList();
             List<AstTopLevel> ret = new List<AstTopLevel>();
             foreach (AstTopLevel level in ParseFile())
             {
@@ -48,24 +49,30 @@ namespace PilotLang
 
         private static void Advance()
         {
-            _tokens.MoveNext();
-            if (_current == null)
+            if (_positionInTokenArray + 1 >= _tokens.Count)
             {
-                _done = false;
+                _done = true;
+            }
+            else
+            {
+                _positionInTokenArray++;
             }
         }
         
-        private static IEnumerable<AstTopLevel> ParseFile()
+        private static List<AstTopLevel> ParseFile()
         {
-            while (_done)
+            var ret = new List<AstTopLevel>();
+            while (!_done)
             {
                 if (Match(TokenType.Function))
                 {
-                    yield return new AstTopLevel(ParseFunction());
+                    ret.Add(new AstTopLevel(ParseFunction()));
                 }
-                
+
                 Advance();
             }
+
+            return ret;
         }
 
         private static FunctionAstPart ParseFunction()
@@ -102,27 +109,36 @@ namespace PilotLang
             List<IAstPart> funcBlock = new List<IAstPart>();
             while (!Match(TokenType.RightBrace))
             {
-                funcBlock.Add(ParseExpr());
+                funcBlock.Add(ParseBlock());
             }
             
             return new FunctionAstPart(retType, funcName, argList, new BlockAstPart(funcBlock));
         }
 
+        private static IAstExpr ParseBlock()
+        {
+            return null;
+        }
+
         private static IAstExpr ParseExpr()
         {
-            // check if there *is* a return statement
             while (true)
             {
-                if (Match(TokenType.Return))
-                {
-                    return ParseReturnStatement();    
-                }
-
-                if (Match(TokenType.Identifier) || Match(TokenType.Integer))
+                if (Expect(TokenType.Identifier) || Expect(TokenType.Integer))
                 {
                     return ParseAstTerminal();
                 }
+
+                if (Match(TokenType.EndOfPhrase))
+                {
+                }
+                else
+                {
+                    break;
+                }
             }
+
+            throw new Exception($"Unexpected {_current} token");
         }
 
         private static IAstExpr ParseAstTerminal()
@@ -134,19 +150,19 @@ namespace PilotLang
                 return new IntegerAstPart(ret);
             }
             
-            if (Expect(typeof(Identifier)))
+            if (Expect(TokenType.Identifier))
             {
-                var ret = (Identifier)Current;
+                var ret = (IdentifierToken) _current;
                 Advance();
                 return new IdentifierAstPart(ret);
             }
 
-            throw new Exception($"Unexpected {Current} token!");
+            throw new Exception($"Unexpected {_current} token!");
         }
 
-        private static IAstExpr ParseReturnStatement()
+        private static IAstStatement ParseReturnStatement()
         {
-            return ParseExpr();
+            return new ReturnAstExpr(ParseExpr());
         }
 
 
@@ -182,18 +198,18 @@ namespace PilotLang
             IAstType cur = ParseSimpleType();
             while (true)
             {
-                if (CTokMatches(typeof(LesserThan)))
+                if (Match(TokenType.LesserThan))
                 {
                     var args = new List<IAstType>();
-                    while (!CTokMatches(typeof(GreaterThan)))
+                    while (!Match(TokenType.GreaterThan))
                     {
                         args.Add(ParseType());
-                        if (CTokMatches(typeof(Coma)))
+                        if (Match(TokenType.Coma))
                         {
                         }
                         else
                         {
-                            if (CTokMatches(typeof(GreaterThan)))
+                            if (Match(TokenType.GreaterThan))
                             {
                                 break;
                             }
@@ -204,9 +220,9 @@ namespace PilotLang
 
                     cur = new GenericType(cur, args);
                 }
-                else if (CTokMatches(typeof(LeftBracket)))
+                else if (Match(TokenType.LeftBracket))
                 {
-                    if (!CTokMatches(typeof(RightBracket)))
+                    if (!Match(TokenType.RightBracket))
                     {
                         throw new Exception("A opening [ must have a closing ] as part of an array type definition");
                     }
@@ -224,12 +240,12 @@ namespace PilotLang
         private static SimpleType ParseSimpleType()
         {
             // Have a name for the type
-            if (!CTokIs(typeof(Identifier)))
+            if (!Expect(TokenType.Identifier))
             {
                 throw new Exception("Type Expected but not found");
             }
             
-            var ret = new SimpleType((Identifier)Current);
+            var ret = new SimpleType((IdentifierToken)_current);
             Advance();
             return ret;
         }

@@ -7,6 +7,7 @@ namespace PilotLang
     {
         
     }
+    
     public class AstTopLevel : IAstPart
     {
         public IAstPart Child;
@@ -42,6 +43,11 @@ namespace PilotLang
             Arguments = arguments;
             FuncBody = funcBody;
         }
+    }
+
+    public struct EndOfPhraseAstExpr : IAstExpr
+    {
+        
     }
 
     public interface IAstType : IAstPart
@@ -81,7 +87,11 @@ namespace PilotLang
         }
     }
 
-    public struct ReturnAstExpr : IAstExpr
+    public interface IAstStatement : IAstPart
+    {
+    }
+
+    public struct ReturnAstExpr : IAstStatement
     {
         public IAstPart Statement;
 
