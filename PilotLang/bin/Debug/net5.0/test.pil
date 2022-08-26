@@ -1,8 +1,7 @@
-﻿fn int return3(name t1, name t2) {
-    
-    for i < 10 {
-        sum++;
+﻿fn int? return3(genE t1<int?>, name t2) {
+    var ret int = 2;
+    for i < 3 {
     }
     
-    return sum;
+    return ret;
 }

@@ -139,6 +139,11 @@ namespace PilotLang
                 return tmp;
             }
 
+            if (Match(TokenType.VariableKeyword))
+            {
+                return ParseDeclaration();
+            }
+
             if (Expect(TokenType.For))
             {
                 var forTok = _current;
@@ -150,7 +155,7 @@ namespace PilotLang
 
                 var iterName = (IdentifierToken)_current;
                 Advance();
-                if (!Match(TokenType.In))
+                if (Match(TokenType.In))
                 {
                     if (!Expect(TokenType.Identifier))
                     {
@@ -158,17 +163,16 @@ namespace PilotLang
                     }
                     // for each
                 }
-                else if (!Expect(TokenType.LesserThan) || !Expect(TokenType.LesserThanOrEqualTo))
+                else if (!(Expect(TokenType.LesserThan) || Expect(TokenType.LesserThanOrEqualTo)))
                 {
-                    throw new ParseError(forTok, "For shorthand must have either \"<\" or \"<=\"");
+                    throw new ParseError(iterName, $"For shorthand must have either \"<\" or \"<=\", found {_current}");
                 }
 
                 bool lessThan = Match(TokenType.LesserThan);
-                Advance();
-                
+
                 IAstExpr upperBound = ParseExpr();
 
-                return new ForLoopShorthand1AstStatement(
+                return new StatementShorthand1ForLoopAstStatement(
                     new SimpleType(
                         new IdentifierToken(TokenType.Identifier, "int", forTok.LinePos, forTok.charPos)),
                         iterName,
@@ -176,7 +180,6 @@ namespace PilotLang
                         ParseBlock(),
                         lessThan
                     );
-
             }
             else
             {
@@ -202,25 +205,42 @@ namespace PilotLang
 
         private static IAstExpr ParseExpr()
         {
-            return ParseAssignment();
+            return ParseExprOr();
         }
 
-        private static IAstExpr ParseAssignment()
+        private static AssignmentAstExpr ParseAssignment()
         {
-            IAstExpr left = ParseExprOr();
-            if (Match(TokenType.Assign))
+            throw new Exception("how did we get here");
+        }
+
+        private static VariableDeclarationAstStatement ParseDeclaration()
+        {
+            if (!Expect(TokenType.Identifier))
             {
-                if (left is IdentifierAstExpr id)
-                {
-                    left = new AssignmentAstExpr(id.Token, ParseExprOr());
-                }
-                else
-                {
-                    throw new ParseError(_lastToken,"Assignment needs to be to an identifier");
-                }
+                throw new ParseError(_current, "Var must be followed by a name");
             }
 
-            return left;
+            IdentifierToken varName = (IdentifierToken)_current;
+            Advance();
+
+            IAstType varType = ParseType();
+            if (Match(TokenType.Semicolon))
+            {
+                return new VariableDeclarationAstStatement(varName, varType, null);
+            }
+
+            if (Match(TokenType.Assign))
+            {
+                var expr = ParseExpr();
+                if (!Match(TokenType.Semicolon))
+                {
+                    throw new ParseError(_current, "Semicolon expected after assignment expression");
+                }
+
+                return new VariableDeclarationAstStatement(varName, varType, expr);
+            }
+
+            throw new ParseError(_current, "Variable must be followed by a \";\" or an \"=\" expression");
         }
 
         private static IAstExpr ParseExprOr()
@@ -257,6 +277,30 @@ namespace PilotLang
                 else if (Match(TokenType.Minus))
                 {
                     left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Minus);
+                }
+                else if (Match(TokenType.Increment))
+                {
+                    if (left is IdentifierAstExpr id)
+                    {
+                        left = new AssignmentAstExpr(id.Token,
+                            new BinaryAstExpr(left, new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, 0, 0)), TwoUnitOperatorType.And));    
+                    }
+                    else
+                    {
+                        throw new ParseError(_lastToken, "Increment only only valid on variables");
+                    }
+                }
+                else if (Match(TokenType.Decrement))
+                {
+                    if (left is IdentifierAstExpr id)
+                    {
+                        left = new AssignmentAstExpr(id.Token,
+                            new BinaryAstExpr(left, new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, 0, 0)), TwoUnitOperatorType.Minus));    
+                    }
+                    else
+                    {
+                        throw new ParseError(_lastToken, "Decrement only only valid on variables");
+                    }
                 }
                 else
                 {
@@ -419,6 +463,12 @@ namespace PilotLang
                     break;
                 }
             }
+
+            if (Match(TokenType.QuestionMark))
+            {
+                return new OptionType(cur);
+            }
+            
             return cur;
         }
 

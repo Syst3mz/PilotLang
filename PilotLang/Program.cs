@@ -8,7 +8,6 @@ namespace PilotLang
     {
         static void Main(string[] args)
         {
-
             var toks = PilotTokenizer.Tokenize(File.OpenRead("test.pil"));
             var ast = PilotAst.BuildAbstractSyntaxTree(toks);
             return;

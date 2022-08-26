@@ -89,6 +89,36 @@ namespace PilotLang
                             yield return new StaticToken(TokenType.GreaterThan, _linePos, _charPos);
                         }
                     }
+                    else if (Compare(TokenType.Plus, nextChar))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.Plus))
+                        {
+                            yield return new StaticToken(TokenType.Increment, _linePos, _charPos);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.Plus, _linePos, _charPos);
+                        }
+                    }
+                    else if (Compare(TokenType.Minus, nextChar))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.Minus))
+                        {
+                            yield return new StaticToken(TokenType.Decrement, _linePos, _charPos);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.Minus, _linePos, _charPos);
+                        }
+                    }
                     else if (_forward.ContainsKey(nextChar + ""))
                     {
                         if (_inputBuffer.Length > 0)

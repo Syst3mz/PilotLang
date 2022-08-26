@@ -56,22 +56,48 @@ namespace PilotLang
         }
     }
 
-    
-    public struct ForLoopShorthand1AstStatement : IAstStatement
+    public interface IForLoopAstStatement : IAstStatement
     {
-        public IAstType IterType;
-        public IdentifierToken IterVar;
+        public IAstType IterType { get; }
+        public IdentifierToken IterVar { get; }
+        public BlockAst Block { get; }
+    }
+
+    public struct StatementShorthand1ForLoopAstStatement : IForLoopAstStatement
+    {
+        public IAstType IterType { get; }
+        public IdentifierToken IterVar { get; }
         public IAstExpr UpperBound;
-        public BlockAst Block;
+        public BlockAst Block { get; }
         public bool IsLesserThan;
 
-        public ForLoopShorthand1AstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
+        public StatementShorthand1ForLoopAstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
         {
             IterType = iterType;
             IterVar = iterVar;
             UpperBound = upperBound;
             Block = block;
             IsLesserThan = isLesserThan;
+        }
+    }
+    
+    public struct StatementShorthand2ForLoopAstStatement : IForLoopAstStatement
+    {
+        public IAstType IterType { get; }
+        public IdentifierToken IterVar { get; }
+        public IAstExpr UpperBound;
+        public IAstExpr InitialValue;
+        public BlockAst Block { get; }
+        public bool IsLesserThan;
+
+        public StatementShorthand2ForLoopAstStatement(IAstExpr upperBound, IAstExpr initialValue, bool isLesserThan, IAstType iterType, IdentifierToken iterVar, BlockAst block)
+        {
+            UpperBound = upperBound;
+            InitialValue = initialValue;
+            IsLesserThan = isLesserThan;
+            IterType = iterType;
+            IterVar = iterVar;
+            Block = block;
         }
     }
 
@@ -109,6 +135,16 @@ namespace PilotLang
         {
             TypeName = typeName;
             TypeArguments = typeArguments;
+        }
+    }
+
+    public struct OptionType : IAstType
+    {
+        public IAstType InternalType;
+
+        public OptionType(IAstType internalType)
+        {
+            InternalType = internalType;
         }
     }
 
@@ -151,15 +187,41 @@ namespace PilotLang
         }
     }
 
+    public struct VariableDeclarationAstStatement : IAstStatement
+    {
+        
+        public IdentifierToken VarName;
+        public IAstType Type;
+        public IAstExpr VarValue;
+
+        public VariableDeclarationAstStatement(IdentifierToken varName, IAstType type, IAstExpr varValue)
+        {
+            VarName = varName;
+            VarValue = varValue;
+            Type = type;
+        }
+    }
+
     public struct AssignmentAstExpr : IAstExpr
     {
-        public IdentifierToken left;
-        public IAstExpr right;
-
-        public AssignmentAstExpr(IdentifierToken left, IAstExpr right)
+        public enum OpCode
         {
-            this.left = left;
-            this.right = right;
+            NoOp,
+            Add,
+            Subtract,
+            Multiply,
+            Divide
+        }
+        
+        public IdentifierToken VarName;
+        public IAstExpr VarValue;
+        public OpCode Op;
+
+        public AssignmentAstExpr(IdentifierToken varName, IAstExpr varValue, OpCode op=OpCode.NoOp)
+        {
+            VarName = varName;
+            VarValue = varValue;
+            Op = op;
         }
     }
 }

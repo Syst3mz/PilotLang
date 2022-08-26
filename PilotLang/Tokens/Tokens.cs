@@ -67,6 +67,14 @@ namespace PilotLang.Tokens
       In,
       [StringRepresentation(":")]
       Colon,
+      [StringRepresentation("++")]
+      Increment,
+      [StringRepresentation("--")]
+      Decrement,
+      [StringRepresentation("var")]
+      VariableKeyword,
+      [StringRepresentation("?")]
+      QuestionMark,
       Identifier,
       Integer
    }
