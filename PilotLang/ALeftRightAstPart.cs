@@ -12,12 +12,12 @@
         Devide
     }
 
-    public struct TwoUnitOperator
+    public struct BinaryAstExpr : IAstExpr
     {
         public IAstExpr Left, Right;
         public TwoUnitOperatorType Type;
 
-        public TwoUnitOperator(IAstExpr left, IAstExpr right, TwoUnitOperatorType type)
+        public BinaryAstExpr(IAstExpr left, IAstExpr right, TwoUnitOperatorType type)
         {
             Left = left;
             Right = right;

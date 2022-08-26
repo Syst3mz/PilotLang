@@ -18,10 +18,11 @@ namespace PilotLang
         {
             _tokens = tokens.ToList();
             List<AstTopLevel> ret = new List<AstTopLevel>();
-            foreach (AstTopLevel level in ParseFile())
+            /*foreach (AstTopLevel level in ParseFile())
             {
                 ret.Add(level);
-            }
+            }*/
+            ret.Add(new AstTopLevel(ParseExpr()));
 
             return ret;
         }
@@ -109,60 +110,82 @@ namespace PilotLang
             List<IAstPart> funcBlock = new List<IAstPart>();
             while (!Match(TokenType.RightBrace))
             {
-                funcBlock.Add(ParseBlock());
+                funcBlock.Add(ParseStatement());
             }
             
             return new FunctionAstPart(retType, funcName, argList, new BlockAstPart(funcBlock));
         }
 
-        private static IAstExpr ParseBlock()
+        private static IAstStatement ParseStatement()
         {
-            return null;
+            if (Match(TokenType.Return))
+            {
+                return ParseReturnStatement();
+            }
+            else
+            {
+                throw new Exception($"Unexpected {_current} token");    
+            }
+        }
+
+        private static IAstStatement ParseReturnStatement()
+        {
+            return new ReturnAstStatement(ParseExpr());
         }
 
         private static IAstExpr ParseExpr()
         {
-            while (true)
-            {
-                if (Expect(TokenType.Identifier) || Expect(TokenType.Integer))
-                {
-                    return ParseAstTerminal();
-                }
-
-                if (Match(TokenType.EndOfPhrase))
-                {
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            throw new Exception($"Unexpected {_current} token");
+            return ParseExprPrecedence1();
+            
         }
 
+        private static IAstExpr ParseExprPrecedence1()
+        {
+            IAstExpr left = ParseAstTerminal();
+            if (Match(TokenType.Plus))
+            {
+                return new BinaryAstExpr(left, ParseAstTerminal(), TwoUnitOperatorType.Plus);
+            }
+
+            throw new Exception($"Unexpected Token {_current}");
+        }
+        
+        private static IAstExpr ParseExprPrecedence2()
+        {
+            IAstExpr left = ParseAstTerminal();
+            
+            if (Match(TokenType.Plus))
+            {
+                IAstExpr right = ParseAstTerminal();
+                Advance();
+                return new BinaryAstExpr(left, right, TwoUnitOperatorType.Plus);
+            }
+
+            throw new Exception($"Error parsing at {_current}");
+        }
+        
         private static IAstExpr ParseAstTerminal()
         {
             if (Expect(TokenType.Integer))
             {
                 var ret = (IntegerToken)_current;
                 Advance();
-                return new IntegerAstPart(ret);
+                return new IntegerAstExpr(ret);
             }
             
             if (Expect(TokenType.Identifier))
             {
                 var ret = (IdentifierToken) _current;
                 Advance();
-                return new IdentifierAstPart(ret);
+                return new IdentifierAstExpr(ret);
+            }
+            
+            if (Match(TokenType.LeftParentheses))
+            {
+                return ParseExpr();
             }
 
             throw new Exception($"Unexpected {_current} token!");
-        }
-
-        private static IAstStatement ParseReturnStatement()
-        {
-            return new ReturnAstExpr(ParseExpr());
         }
 
 

@@ -5,9 +5,9 @@ namespace PilotLang
 {
     public interface IAstPart
     {
-        
+
     }
-    
+
     public class AstTopLevel : IAstPart
     {
         public IAstPart Child;
@@ -27,8 +27,8 @@ namespace PilotLang
             this.children = children;
         }
     }
-    
-    
+
+
     public struct FunctionAstPart : IAstPart
     {
         public IAstType ReturnType;
@@ -36,7 +36,8 @@ namespace PilotLang
         public List<(IdentifierToken, IAstType)> Arguments;
         public BlockAstPart FuncBody;
 
-        public FunctionAstPart(IAstType returnType, IdentifierToken functionName, List<(IdentifierToken, IAstType)> arguments, BlockAstPart funcBody)
+        public FunctionAstPart(IAstType returnType, IdentifierToken functionName,
+            List<(IdentifierToken, IAstType)> arguments, BlockAstPart funcBody)
         {
             ReturnType = returnType;
             FunctionName = functionName;
@@ -47,12 +48,12 @@ namespace PilotLang
 
     public struct EndOfPhraseAstExpr : IAstExpr
     {
-        
+
     }
 
     public interface IAstType : IAstPart
     {
-        
+
     }
 
     public struct SimpleType : IAstType
@@ -64,7 +65,7 @@ namespace PilotLang
             TypeName = typeName;
         }
     }
-    
+
     public struct ArrayType : IAstType
     {
         public IAstType TypeName;
@@ -91,40 +92,36 @@ namespace PilotLang
     {
     }
 
-    public struct ReturnAstExpr : IAstStatement
+    public struct ReturnAstStatement : IAstStatement
     {
-        public IAstPart Statement;
+        public IAstExpr Expr;
 
-        public ReturnAstExpr(IAstPart statement)
+        public ReturnAstStatement(IAstExpr expr)
         {
-            Statement = statement;
+            Expr = expr;
         }
     }
 
     public interface IAstExpr : IAstPart
     {
-        
+
     }
 
-    public interface IAstTerminal : IAstExpr
-    {
-    }
-    
-    public struct IdentifierAstPart : IAstTerminal
+    public struct IdentifierAstExpr : IAstExpr
     {
         public IdentifierToken Token;
 
-        public IdentifierAstPart(IdentifierToken token)
+        public IdentifierAstExpr(IdentifierToken token)
         {
             Token = token;
         }
     }
-    
-    public struct IntegerAstPart : IAstTerminal
+
+    public struct IntegerAstExpr : IAstExpr
     {
         public IntegerToken Token;
 
-        public IntegerAstPart(IntegerToken token)
+        public IntegerAstExpr(IntegerToken token)
         {
             Token = token;
         }
