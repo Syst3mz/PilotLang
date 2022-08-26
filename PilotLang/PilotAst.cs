@@ -141,33 +141,55 @@ namespace PilotLang
 
             if (Match(TokenType.For))
             {
+                var forTok = _lastToken;
                 if (!Expect(TokenType.Identifier))
                 {
-                    throw new ParseError(_current, "\for\" must be followed by a identifier");
+                    throw new ParseError(forTok, "\for\" must be followed by a identifier");
                 }
 
                 var iterName = (IdentifierToken)_current;
                 if (!Match(TokenType.In))
                 {
+                    if (!Expect(TokenType.Identifier))
+                    {
+                        throw new ParseError(forTok, "\"in\" must be followed by an identifier");
+                    }
                     // for each
                 }
-                else if (!Match(TokenType.LesserThan) || !Match(TokenType.LesserThanOrEqualTo))
+                else if (!Expect(TokenType.LesserThan) || !Expect(TokenType.LesserThanOrEqualTo))
                 {
-                    throw new ParseError()
+                    throw new ParseError(forTok, "For shorthand must have either \"<\" or \"<=\"");
                 }
-                
-                
+
+                bool lessThan = Match(TokenType.LesserThan);
+
+                IAstExpr upperBound = ParseExpr();
+
+                return new ForLoopShorthand1AstStatement(
+                    new SimpleType(
+                        new IdentifierToken(TokenType.Identifier, "int", forTok.LinePos, forTok.charPos)),
+                        iterName,
+                        upperBound,
+                        ParseBlock(),
+                        lessThan
+                    );
+
             }
             else
             {
-                ExprStatement exprStatement = new ExprStatement(ParseExpr());
-                if (!Match(TokenType.Semicolon))
-                {
-                    throw new ParseError(_lastToken,"Statement must end with a ;");
-                }
-
-                return exprStatement;
+                return ParseExprStatement();
             }
+        }
+
+        private static IAstStatement ParseExprStatement()
+        {
+            ExprStatement exprStatement = new ExprStatement(ParseExpr());
+            if (!Match(TokenType.Semicolon))
+            {
+                throw new ParseError(_lastToken,"Statement must end with a ;");
+            }
+
+            return exprStatement;
         }
 
         private static ReturnAstStatement ParseReturnStatement()

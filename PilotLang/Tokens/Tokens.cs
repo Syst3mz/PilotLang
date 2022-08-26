@@ -65,6 +65,8 @@ namespace PilotLang.Tokens
       ExclamationMark,
       [StringRepresentation("in")]
       In,
+      [StringRepresentation(":")]
+      Colon,
       Identifier,
       Integer
    }

@@ -1,5 +1,4 @@
-﻿fn return3(name t1, name t2) {
-    int sum = 0;
+﻿fn int return3(name t1, name t2) {
     
     for i < 10 {
         sum++;

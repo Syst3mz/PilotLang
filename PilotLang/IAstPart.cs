@@ -63,13 +63,15 @@ namespace PilotLang
         public IdentifierToken IterVar;
         public IAstExpr UpperBound;
         public BlockAst Block;
+        public bool IsLesserThan;
 
-        public ForLoopShorthand1AstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block)
+        public ForLoopShorthand1AstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
         {
             IterType = iterType;
             IterVar = iterVar;
             UpperBound = upperBound;
             Block = block;
+            IsLesserThan = isLesserThan;
         }
     }
 
