@@ -139,15 +139,17 @@ namespace PilotLang
                 return tmp;
             }
 
-            if (Match(TokenType.For))
+            if (Expect(TokenType.For))
             {
-                var forTok = _lastToken;
+                var forTok = _current;
+                Advance();
                 if (!Expect(TokenType.Identifier))
                 {
                     throw new ParseError(forTok, "\for\" must be followed by a identifier");
                 }
 
                 var iterName = (IdentifierToken)_current;
+                Advance();
                 if (!Match(TokenType.In))
                 {
                     if (!Expect(TokenType.Identifier))
@@ -162,7 +164,8 @@ namespace PilotLang
                 }
 
                 bool lessThan = Match(TokenType.LesserThan);
-
+                Advance();
+                
                 IAstExpr upperBound = ParseExpr();
 
                 return new ForLoopShorthand1AstStatement(
