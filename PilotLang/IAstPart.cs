@@ -17,14 +17,24 @@ namespace PilotLang
             Child = child;
         }
     }
-
-    public class BlockAstPart : IAstPart
+    
+    public struct BlockAst : IAstExpr
     {
-        public List<IAstPart> children;
+        public List<IAstStatement> Statements;
 
-        public BlockAstPart(List<IAstPart> children)
+        public BlockAst(List<IAstStatement> statements)
         {
-            this.children = children;
+            Statements = statements;
+        }
+    }
+
+    public struct ExprStatement : IAstStatement
+    {
+        public IAstExpr Expr;
+
+        public ExprStatement(IAstExpr expr)
+        {
+            Expr = expr;
         }
     }
 
@@ -34,10 +44,10 @@ namespace PilotLang
         public IAstType ReturnType;
         public IdentifierToken FunctionName;
         public List<(IdentifierToken, IAstType)> Arguments;
-        public BlockAstPart FuncBody;
+        public IAstExpr FuncBody;
 
         public FunctionAstPart(IAstType returnType, IdentifierToken functionName,
-            List<(IdentifierToken, IAstType)> arguments, BlockAstPart funcBody)
+            List<(IdentifierToken, IAstType)> arguments, IAstExpr funcBody)
         {
             ReturnType = returnType;
             FunctionName = functionName;
@@ -46,9 +56,21 @@ namespace PilotLang
         }
     }
 
-    public struct EndOfPhraseAstExpr : IAstExpr
+    
+    public struct ForLoopShorthand1AstStatement : IAstStatement
     {
+        public IAstType IterType;
+        public IdentifierToken IterVar;
+        public IAstExpr UpperBound;
+        public BlockAst Block;
 
+        public ForLoopShorthand1AstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block)
+        {
+            IterType = iterType;
+            IterVar = iterVar;
+            UpperBound = upperBound;
+            Block = block;
+        }
     }
 
     public interface IAstType : IAstPart
@@ -124,6 +146,18 @@ namespace PilotLang
         public IntegerAstExpr(IntegerToken token)
         {
             Token = token;
+        }
+    }
+
+    public struct AssignmentAstExpr : IAstExpr
+    {
+        public IdentifierToken left;
+        public IAstExpr right;
+
+        public AssignmentAstExpr(IdentifierToken left, IAstExpr right)
+        {
+            this.left = left;
+            this.right = right;
         }
     }
 }

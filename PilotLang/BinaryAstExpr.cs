@@ -9,7 +9,9 @@
         Plus,
         Minus,
         Multiply,
-        Devide
+        Divide,
+        Or,
+        And
     }
 
     public struct BinaryAstExpr : IAstExpr

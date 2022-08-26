@@ -11,6 +11,20 @@ namespace PilotLang
         private static List<IToken> _tokens;
         private static bool _done = false;
         private static IToken _current { get => _tokens[_positionInTokenArray]; }
+        private static IToken _lastToken
+        {
+            get {
+                if (_positionInTokenArray > 0)
+                {
+                    return _tokens[_positionInTokenArray];
+                }
+                else
+                {
+                    return _tokens[0];
+                }
+            }
+        }
+
         private static int _positionInTokenArray = 0;
 
         // Actually parse
@@ -18,11 +32,10 @@ namespace PilotLang
         {
             _tokens = tokens.ToList();
             List<AstTopLevel> ret = new List<AstTopLevel>();
-            /*foreach (AstTopLevel level in ParseFile())
+            foreach (AstTopLevel level in ParseFile())
             {
                 ret.Add(level);
-            }*/
-            ret.Add(new AstTopLevel(ParseExpr()));
+            }
 
             return ret;
         }
@@ -65,7 +78,7 @@ namespace PilotLang
             var ret = new List<AstTopLevel>();
             while (!_done)
             {
-                if (Match(TokenType.Function))
+                if (Expect(TokenType.Function))
                 {
                     ret.Add(new AstTopLevel(ParseFunction()));
                 }
@@ -78,90 +91,201 @@ namespace PilotLang
 
         private static FunctionAstPart ParseFunction()
         {
-            if (!Expect(TokenType.Identifier))
-            {
-                //error case
-                throw new Exception("fn should be followed by an identifier");
-            }
-
+            var fnTok = _current;
+            Advance();
             var retType = ParseType();
             
             
             if (!Expect(TokenType.Identifier))
             {
-                throw new Exception("Function must have a name");
-            }
+                throw new ParseError(fnTok.LinePos, fnTok.charPos - 1,"Function must have a name.");
+            } 
 
             var funcName = (IdentifierToken)_current;
             Advance();
-            
-            if (!Match(TokenType.LeftParentheses))
-            {
-                throw new Exception("A function name must be followed by its arguments");
-            }
-            
+
             List<(IdentifierToken, IAstType)> argList = ParseArgList();
 
+            return new FunctionAstPart(retType, funcName, argList, ParseBlock());
+        }
+
+        private static BlockAst ParseBlock()
+        {
             if (!Match(TokenType.LeftBrace))
             {
-                throw new Exception("A function must have a body");
+                throw new ParseError(_lastToken, "A block must start with {");
             }
 
-            List<IAstPart> funcBlock = new List<IAstPart>();
+            List<IAstStatement> statements = new List<IAstStatement>();
             while (!Match(TokenType.RightBrace))
             {
-                funcBlock.Add(ParseStatement());
+                statements.Add(ParseStatement());
             }
-            
-            return new FunctionAstPart(retType, funcName, argList, new BlockAstPart(funcBlock));
+
+            return new BlockAst(statements);
         }
 
         private static IAstStatement ParseStatement()
         {
             if (Match(TokenType.Return))
             {
-                return ParseReturnStatement();
+
+                ReturnAstStatement tmp = ParseReturnStatement();
+                if (!Match(TokenType.Semicolon))
+                {
+                    throw new ParseError(_lastToken,"Statement must end with a ;");
+                }
+
+                return tmp;
+            }
+
+            if (Match(TokenType.For))
+            {
+                if (!Expect(TokenType.Identifier))
+                {
+                    throw new ParseError(_current, "\for\" must be followed by a identifier");
+                }
+
+                var iterName = (IdentifierToken)_current;
+                if (!Match(TokenType.In))
+                {
+                    // for each
+                }
+                else if (!Match(TokenType.LesserThan) || !Match(TokenType.LesserThanOrEqualTo))
+                {
+                    throw new ParseError()
+                }
+                
+                
             }
             else
             {
-                throw new Exception($"Unexpected {_current} token");    
+                ExprStatement exprStatement = new ExprStatement(ParseExpr());
+                if (!Match(TokenType.Semicolon))
+                {
+                    throw new ParseError(_lastToken,"Statement must end with a ;");
+                }
+
+                return exprStatement;
             }
         }
 
-        private static IAstStatement ParseReturnStatement()
+        private static ReturnAstStatement ParseReturnStatement()
         {
             return new ReturnAstStatement(ParseExpr());
         }
 
         private static IAstExpr ParseExpr()
         {
-            return ParseExprPrecedence1();
-            
+            return ParseAssignment();
+        }
+
+        private static IAstExpr ParseAssignment()
+        {
+            IAstExpr left = ParseExprOr();
+            if (Match(TokenType.Assign))
+            {
+                if (left is IdentifierAstExpr id)
+                {
+                    left = new AssignmentAstExpr(id.Token, ParseExprOr());
+                }
+                else
+                {
+                    throw new ParseError(_lastToken,"Assignment needs to be to an identifier");
+                }
+            }
+
+            return left;
+        }
+
+        private static IAstExpr ParseExprOr()
+        {
+            IAstExpr left = ParseExprAnd();
+            if (Match(TokenType.Or))
+            {
+                left = new BinaryAstExpr(left, ParseExprAnd(), TwoUnitOperatorType.Or);
+            }
+
+            return left;
+        }
+
+        private static IAstExpr ParseExprAnd()
+        {
+            IAstExpr left = ParseExprPrecedence1();
+            if (Match(TokenType.And))
+            {
+                left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOperatorType.And);
+            }
+
+            return left;
         }
 
         private static IAstExpr ParseExprPrecedence1()
         {
-            IAstExpr left = ParseAstTerminal();
-            if (Match(TokenType.Plus))
+            IAstExpr left = ParseExprPrecedence2();
+            while (true)
             {
-                return new BinaryAstExpr(left, ParseAstTerminal(), TwoUnitOperatorType.Plus);
+                if (Match(TokenType.Plus))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Plus);
+                }
+                else if (Match(TokenType.Minus))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Minus);
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            throw new Exception($"Unexpected Token {_current}");
+            return left;
         }
         
         private static IAstExpr ParseExprPrecedence2()
         {
             IAstExpr left = ParseAstTerminal();
-            
-            if (Match(TokenType.Plus))
+
+            while (true)
             {
-                IAstExpr right = ParseAstTerminal();
-                Advance();
-                return new BinaryAstExpr(left, right, TwoUnitOperatorType.Plus);
+                if (Match(TokenType.Dot))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOperatorType.Divide);
+                }
+                else if (Match(TokenType.Multiply))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOperatorType.Multiply);
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            throw new Exception($"Error parsing at {_current}");
+            return left;
+        }
+        
+        private static IAstExpr ParseExprPrecedence3()
+        {
+            IAstExpr left = ParseAstTerminal();
+
+            while (true)
+            {
+                if (Match(TokenType.Divide))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Divide);
+                }
+                else if (Match(TokenType.Multiply))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Multiply);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return left;
         }
         
         private static IAstExpr ParseAstTerminal()
@@ -182,16 +306,29 @@ namespace PilotLang
             
             if (Match(TokenType.LeftParentheses))
             {
-                return ParseExpr();
+                var xpr = ParseExpr();
+                if (Match(TokenType.RightParentheses))
+                {
+                    return xpr;
+                }
+                else
+                {
+                    throw new ParseError(_lastToken,"Opening parenthesis need a closer");
+                }
             }
 
-            throw new Exception($"Unexpected {_current} token!");
+            throw new ParseError(_current,$"Unexpected {_current} token!");
         }
 
 
         private static List<(IdentifierToken, IAstType)> ParseArgList()
         {
             List<(IdentifierToken, IAstType)> argList = new List<(IdentifierToken, IAstType)>();
+            if (!Match(TokenType.LeftParentheses))
+            {
+                throw new ParseError(_lastToken, "A function name must be followed by its arguments");
+            }
+            
             if (Expect(TokenType.RightParentheses))
             {
                 return argList;
@@ -203,7 +340,7 @@ namespace PilotLang
                 if (Expect(TokenType.Identifier))
                 {
                     argList.Add((argName, ParseType()));
-                    if (!Match(TokenType.Coma))
+                    if (!Match(TokenType.Comma))
                     {
                         if (Match(TokenType.RightParentheses))
                         {
@@ -213,7 +350,7 @@ namespace PilotLang
                 }
             }
 
-            throw new Exception("No end to argument list");
+            throw new ParseError(_lastToken,"No end to argument list");
         }
 
         private static IAstType ParseType()
@@ -227,7 +364,7 @@ namespace PilotLang
                     while (!Match(TokenType.GreaterThan))
                     {
                         args.Add(ParseType());
-                        if (Match(TokenType.Coma))
+                        if (Match(TokenType.Comma))
                         {
                         }
                         else
@@ -237,7 +374,7 @@ namespace PilotLang
                                 break;
                             }
                             
-                            throw new Exception("A generic type argument list must be coma delimited");
+                            throw new ParseError(_lastToken,"A generic type argument list must be coma delimited");
                         }
                     }
 
@@ -247,7 +384,7 @@ namespace PilotLang
                 {
                     if (!Match(TokenType.RightBracket))
                     {
-                        throw new Exception("A opening [ must have a closing ] as part of an array type definition");
+                        throw new ParseError(_lastToken,"A opening [ must have a closing ] as part of an array type definition");
                     }
 
                     cur = new ArrayType(cur);
@@ -265,7 +402,7 @@ namespace PilotLang
             // Have a name for the type
             if (!Expect(TokenType.Identifier))
             {
-                throw new Exception("Type Expected but not found");
+                throw new ParseError(_lastToken,"Identifier Expected but not found");
             }
             
             var ret = new SimpleType((IdentifierToken)_current);

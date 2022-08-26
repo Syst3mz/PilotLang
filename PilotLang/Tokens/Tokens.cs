@@ -38,13 +38,13 @@ namespace PilotLang.Tokens
       [StringRepresentation(")")]
       RightParentheses,
       [StringRepresentation(";")]
-      EndOfPhrase,
+      Semicolon,
       [StringRepresentation("return")]
       Return,
       [StringRepresentation(".")]
       Dot,
       [StringRepresentation(",")]
-      Coma,
+      Comma,
       [StringRepresentation("+")]
       Plus,
       [StringRepresentation("-")]
@@ -52,7 +52,19 @@ namespace PilotLang.Tokens
       [StringRepresentation("*")]
       Multiply,
       [StringRepresentation("/")]
-      Devide,
+      Divide,
+      [StringRepresentation("&&")]
+      And,
+      [StringRepresentation("||")]
+      Or,
+      [StringRepresentation("for")]
+      For,
+      [StringRepresentation("while")]
+      While,
+      [StringRepresentation("!")]
+      ExclamationMark,
+      [StringRepresentation("in")]
+      In,
       Identifier,
       Integer
    }
@@ -60,15 +72,21 @@ namespace PilotLang.Tokens
    public interface IToken
    {
       public TokenType Type { get; }
+      public int LinePos { get; }
+      public int charPos { get; }
    }
 
    public struct StaticToken : IToken
    {
       public TokenType Type { get; }
+      public int LinePos { get; }
+      public int charPos { get; }
 
-      public StaticToken(TokenType type)
+      public StaticToken(TokenType type, int linePos, int charPos)
       {
          Type = type;
+         LinePos = linePos;
+         this.charPos = charPos;
       }
 
       public override string ToString()
@@ -80,12 +98,16 @@ namespace PilotLang.Tokens
    public struct IdentifierToken : IToken
    {
       public TokenType Type { get; }
+      public int LinePos { get; }
+      public int charPos { get; }
       public string Text;
 
-      public IdentifierToken(TokenType type, string text)
+      public IdentifierToken(TokenType type,string text, int linePos, int charPos)
       {
-         Type = type;
          Text = text;
+         Type = type;
+         LinePos = linePos;
+         this.charPos = charPos;
       }
 
       public override string ToString()
@@ -97,15 +119,19 @@ namespace PilotLang.Tokens
    public struct IntegerToken : IToken
    {
       public TokenType Type { get; }
+      public int LinePos { get; }
+      public int charPos { get; }
       public int Number;
 
-      public IntegerToken(TokenType type, int number)
+      public IntegerToken(TokenType type, int number, int linePos, int charPos)
       {
          Number = number;
          Type = type;
-         
+         LinePos = linePos;
+         this.charPos = charPos;
       }
-      
+
+
       public override string ToString()
       {
          return $"{Type}: {Number}";

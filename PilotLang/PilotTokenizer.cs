@@ -12,6 +12,7 @@ namespace PilotLang
         private static Dictionary<string, TokenType> _forward;
         private static Dictionary<TokenType, string> _backward;
         private static StreamReader _rawStream;
+        private static int _linePos = 1, _charPos = 1;
         private static void GetSimpleLookupTable()
         {
             var enumType = typeof(TokenType);
@@ -50,6 +51,12 @@ namespace PilotLang
             while (!_rawStream.EndOfStream)
             {
                 var nextChar = GetNextChar();
+                _charPos++;
+                if (nextChar == '\n')
+                {
+                    _linePos++;
+                    _charPos = 1;
+                }
                 if (!char.IsWhiteSpace(nextChar))
                 {
                     if (Compare(TokenType.LesserThan, nextChar))
@@ -60,11 +67,11 @@ namespace PilotLang
                         }
                         if (MatchNextChar(TokenType.Assign))
                         {
-                            yield return new StaticToken(TokenType.LesserThanOrEqualTo);
+                            yield return new StaticToken(TokenType.LesserThanOrEqualTo, _linePos, _charPos);
                         }
                         else
                         {
-                            yield return new StaticToken(TokenType.LesserThan);
+                            yield return new StaticToken(TokenType.LesserThan, _linePos, _charPos);
                         }
                     }
                     else if (Compare(TokenType.GreaterThan, nextChar))
@@ -75,11 +82,11 @@ namespace PilotLang
                         }
                         if (MatchNextChar(TokenType.Assign))
                         {
-                            yield return new StaticToken(TokenType.GreaterThanOrEqualTo);
+                            yield return new StaticToken(TokenType.GreaterThanOrEqualTo, _linePos, _charPos);
                         }
                         else
                         {
-                            yield return new StaticToken(TokenType.GreaterThan);
+                            yield return new StaticToken(TokenType.GreaterThan, _linePos, _charPos);
                         }
                     }
                     else if (_forward.ContainsKey(nextChar + ""))
@@ -88,7 +95,7 @@ namespace PilotLang
                         {
                             yield return TokenizeInputBuffer();
                         }
-                        yield return new StaticToken(_forward[nextChar+""]);
+                        yield return new StaticToken(_forward[nextChar+""], _linePos, _charPos);
                     }
                     else
                     {
@@ -102,6 +109,11 @@ namespace PilotLang
                         yield return TokenizeInputBuffer();
                     }
                 }
+            }
+
+            if (_inputBuffer.Length > 0)
+            {
+                yield return TokenizeInputBuffer();
             }
         }
 
@@ -126,14 +138,14 @@ namespace PilotLang
             IToken ret;
             if (_forward.ContainsKey(input))
             {
-                ret = new StaticToken(_forward[input]);
+                ret = new StaticToken(_forward[input], _linePos, _charPos);
             }else if (char.IsDigit(input[0]))
             {
-                ret = new IntegerToken(TokenType.Integer, int.Parse(input));
+                ret = new IntegerToken(TokenType.Integer, int.Parse(input), _linePos, _charPos);
             }
             else
             {
-                ret = new IdentifierToken(TokenType.Identifier, input);
+                ret = new IdentifierToken(TokenType.Identifier, input, _linePos, _charPos);
             }
             
             return ret;
