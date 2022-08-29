@@ -1,11 +1,13 @@
 ﻿namespace PilotLang
 {
-    public enum TwoUnitOperatorType
+    public enum TwoUnitOp
     {
         LesserThan,
         Leq,
         GreaterThan,
         Geq,
+        Equals,
+        NotEquals,
         Plus,
         Minus,
         Multiply,
@@ -17,13 +19,13 @@
     public struct BinaryAstExpr : IAstExpr
     {
         public IAstExpr Left, Right;
-        public TwoUnitOperatorType Type;
+        public TwoUnitOp Op;
 
-        public BinaryAstExpr(IAstExpr left, IAstExpr right, TwoUnitOperatorType type)
+        public BinaryAstExpr(IAstExpr left, IAstExpr right, TwoUnitOp op)
         {
             Left = left;
             Right = right;
-            Type = type;
+            Op = op;
         }
     }
 }

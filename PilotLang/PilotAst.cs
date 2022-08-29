@@ -18,26 +18,19 @@ namespace PilotLang
                 {
                     return _tokens[_positionInTokenArray];
                 }
-                else
-                {
-                    return _tokens[0];
-                }
+                return _tokens[0];
             }
         }
 
         private static int _positionInTokenArray = 0;
 
         // Actually parse
-        public static List<AstTopLevel> BuildAbstractSyntaxTree(IEnumerable<IToken> tokens)
+        public static List<IAstPart> BuildAbstractSyntaxTree(IEnumerable<IToken> tokens)
         {
             _tokens = tokens.ToList();
-            List<AstTopLevel> ret = new List<AstTopLevel>();
-            foreach (AstTopLevel level in ParseFile())
-            {
-                ret.Add(level);
-            }
+            List<IAstPart> ret = new List<IAstPart>();
 
-            return ret;
+            return ParseFile();
         }
 
         private static bool Match(TokenType t)
@@ -73,14 +66,14 @@ namespace PilotLang
             }
         }
         
-        private static List<AstTopLevel> ParseFile()
+        private static List<IAstPart> ParseFile()
         {
-            var ret = new List<AstTopLevel>();
+            var ret = new List<IAstPart>();
             while (!_done)
             {
                 if (Expect(TokenType.Function))
                 {
-                    ret.Add(new AstTopLevel(ParseFunction()));
+                    ret.Add(ParseFunction());
                 }
 
                 Advance();
@@ -143,48 +136,116 @@ namespace PilotLang
             {
                 return ParseDeclaration();
             }
+            if (Match(TokenType.While))
+            {
+                IAstExpr check = ParseExpr();
+                BlockAst block = ParseBlock();
 
-            if (Expect(TokenType.For))
+                return new WhileLoopAstStatement(check, block);
+            }
+            /*if (Expect(TokenType.For))
             {
                 var forTok = _current;
                 Advance();
-                if (!Expect(TokenType.Identifier))
-                {
-                    throw new ParseError(forTok, "\for\" must be followed by a identifier");
-                }
 
-                var iterName = (IdentifierToken)_current;
-                Advance();
-                if (Match(TokenType.In))
+                
+                
+                if (Match(TokenType.VariableKeyword))
                 {
                     if (!Expect(TokenType.Identifier))
                     {
-                        throw new ParseError(forTok, "\"in\" must be followed by an identifier");
+                        throw new ParseError(_current, "Inline variable declaration must have a name");
                     }
-                    // for each
-                }
-                else if (!(Expect(TokenType.LesserThan) || Expect(TokenType.LesserThanOrEqualTo)))
+
+                    var iterName = (IdentifierToken)_current;
+                    Advance();
+
+                    IAstType varType = ParseType();
+
+                    if (Match(TokenType.In))
+                    {
+                        if (!Expect(TokenType.Identifier))
+                        {
+                            throw new ParseError(_lastToken, "A for loop must iterate through something");
+                        }
+
+                        var iterThrough = (IdentifierToken)_current;
+                        Advance();
+
+                        return new ForEachWithExplicitStatement(iterName, ParseBlock(), iterThrough);
+                    }
+                    
+                    if(Match(TokenType.Assign))
+                    {
+                        if (!Match(TokenType.Assign))
+                        {
+                            throw new ParseError(_current, "A for loop must have a lower bound");
+                        }
+
+                        var lowerBound = ParseExpr();
+                        if (!Match(TokenType.Semicolon))
+                        {
+                            throw new ParseError(_lastToken, "Semicolon expected after inline declaration");
+                        }
+                    }
+                    else
+                    {
+                        throw new ParseError(_current, "Inline declaration must have equals or in");
+                    }
+                } 
+                else if (Expect(TokenType.Identifier))
                 {
-                    throw new ParseError(iterName, $"For shorthand must have either \"<\" or \"<=\", found {_current}");
+                    var iterName = ((IdentifierToken)_current);
+                    Advance();
+                    if (Match(TokenType.In))
+                    {
+                        if (!Expect(TokenType.Identifier))
+                        {
+                            throw new ParseError(_current, "For loop needs something to iterate through");
+                        }
+
+                        var iterThrough = (IdentifierToken)_current;
+                        return new ForEachStatement(iterName, ParseBlock(), iterThrough);
+                    }
                 }
+                else
+                {
+                    throw new ParseError(forTok,
+                        "for loop must be followed by either a inline variable declaration or an expression");
+                }
+                
+                IAstExpr upperBound;
+                bool isLesserThan;
 
-                bool lessThan = Match(TokenType.LesserThan);
+                while (!Expect(TokenType.LeftBrace))
+                {
 
-                IAstExpr upperBound = ParseExpr();
+                    if (Expect(TokenType.Assign))
+                    {
+                            
+                    }
+                    if (Expect(TokenType.LesserThan) || Expect(TokenType.LesserThanOrEqualTo))
+                    {
+                        isLesserThan = Expect(TokenType.LesserThan);
+                        Advance();
 
-                return new StatementShorthand1ForLoopAstStatement(
-                    new SimpleType(
-                        new IdentifierToken(TokenType.Identifier, "int", forTok.LinePos, forTok.charPos)),
-                        iterName,
-                        upperBound,
-                        ParseBlock(),
-                        lessThan
-                    );
-            }
+                        upperBound = ParseExpr();
+                    }
+                }
+            }*/
             else
             {
                 return ParseExprStatement();
             }
+        }
+
+        private static (bool, IAstExpr) GetForLoopUpperBound()
+        {
+            bool lessThan = Expect(TokenType.LesserThan);
+            Advance();
+            
+            IAstExpr upperBound = ParseExpr();
+            return (lessThan, upperBound);
         }
 
         private static IAstStatement ParseExprStatement()
@@ -208,11 +269,6 @@ namespace PilotLang
             return ParseExprOr();
         }
 
-        private static AssignmentAstExpr ParseAssignment()
-        {
-            throw new Exception("how did we get here");
-        }
-
         private static VariableDeclarationAstStatement ParseDeclaration()
         {
             if (!Expect(TokenType.Identifier))
@@ -229,7 +285,7 @@ namespace PilotLang
                 return new VariableDeclarationAstStatement(varName, varType, null);
             }
 
-            if (Match(TokenType.Assign))
+            if (Match(TokenType.SingleEquals))
             {
                 var expr = ParseExpr();
                 if (!Match(TokenType.Semicolon))
@@ -248,7 +304,7 @@ namespace PilotLang
             IAstExpr left = ParseExprAnd();
             if (Match(TokenType.Or))
             {
-                left = new BinaryAstExpr(left, ParseExprAnd(), TwoUnitOperatorType.Or);
+                left = new BinaryAstExpr(left, ParseExprAnd(), TwoUnitOp.Or);
             }
 
             return left;
@@ -256,10 +312,48 @@ namespace PilotLang
 
         private static IAstExpr ParseExprAnd()
         {
-            IAstExpr left = ParseExprPrecedence1();
+            IAstExpr left = ParseComparisons();
             if (Match(TokenType.And))
             {
-                left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOperatorType.And);
+                left = new BinaryAstExpr(left, ParseComparisons(), TwoUnitOp.And);
+            }
+
+            return left;
+        }
+
+        private static IAstExpr ParseComparisons()
+        {
+            IAstExpr left = ParseExprPrecedence1();
+            while (true)
+            {
+                if (Match(TokenType.LesserThan))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.LesserThan);
+                }
+                else if (Match(TokenType.LesserThanOrEqualTo))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.Leq);
+                }
+                else if (Match(TokenType.GreaterThan))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.GreaterThan);
+                }
+                else if (Match(TokenType.GreaterThanOrEqualTo))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.Geq);
+                }
+                else if (Match(TokenType.EqualsEquals))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.Equals);
+                }
+                else if (Match(TokenType.ExclamationEquals))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence1(), TwoUnitOp.NotEquals);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return left;
@@ -272,18 +366,18 @@ namespace PilotLang
             {
                 if (Match(TokenType.Plus))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Plus);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOp.Plus);
                 }
                 else if (Match(TokenType.Minus))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Minus);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOp.Minus);
                 }
                 else if (Match(TokenType.Increment))
                 {
                     if (left is IdentifierAstExpr id)
                     {
                         left = new AssignmentAstExpr(id.Token,
-                            new BinaryAstExpr(left, new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, 0, 0)), TwoUnitOperatorType.And));    
+                            new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, -1, -1)) , AssignmentAstExpr.OpCode.Add);    
                     }
                     else
                     {
@@ -295,7 +389,7 @@ namespace PilotLang
                     if (left is IdentifierAstExpr id)
                     {
                         left = new AssignmentAstExpr(id.Token,
-                            new BinaryAstExpr(left, new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, 0, 0)), TwoUnitOperatorType.Minus));    
+                            new IntegerAstExpr(new IntegerToken(TokenType.Integer, 1, -1, -1)) , AssignmentAstExpr.OpCode.Subtract);      
                     }
                     else
                     {
@@ -319,11 +413,15 @@ namespace PilotLang
             {
                 if (Match(TokenType.Dot))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOperatorType.Divide);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOp.Divide);
                 }
                 else if (Match(TokenType.Multiply))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOperatorType.Multiply);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOp.Multiply);
+                }
+                else if (Match(TokenType.Divide))
+                {
+                    left = new BinaryAstExpr(left, ParseExprPrecedence3(), TwoUnitOp.Divide);
                 }
                 else
                 {
@@ -342,11 +440,11 @@ namespace PilotLang
             {
                 if (Match(TokenType.Divide))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Divide);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOp.Divide);
                 }
                 else if (Match(TokenType.Multiply))
                 {
-                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOperatorType.Multiply);
+                    left = new BinaryAstExpr(left, ParseExprPrecedence2(), TwoUnitOp.Multiply);
                 }
                 else
                 {
@@ -395,10 +493,9 @@ namespace PilotLang
             List<(IdentifierToken, IAstType)> argList = new List<(IdentifierToken, IAstType)>();
             if (!Match(TokenType.LeftParentheses))
             {
-                throw new ParseError(_lastToken, "A function name must be followed by its arguments");
+                throw new ParseError(_lastToken, "An arg list's opening paren must be followed by its arguments");
             }
-            
-            if (Expect(TokenType.RightParentheses))
+            if (Match(TokenType.RightParentheses))
             {
                 return argList;
             }

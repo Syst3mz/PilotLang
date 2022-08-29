@@ -65,7 +65,7 @@ namespace PilotLang
                         {
                             yield return TokenizeInputBuffer();
                         }
-                        if (MatchNextChar(TokenType.Assign))
+                        if (MatchNextChar(TokenType.SingleEquals))
                         {
                             yield return new StaticToken(TokenType.LesserThanOrEqualTo, _linePos, _charPos);
                         }
@@ -80,7 +80,7 @@ namespace PilotLang
                         {
                             yield return TokenizeInputBuffer();
                         }
-                        if (MatchNextChar(TokenType.Assign))
+                        if (MatchNextChar(TokenType.SingleEquals))
                         {
                             yield return new StaticToken(TokenType.GreaterThanOrEqualTo, _linePos, _charPos);
                         }
@@ -117,6 +117,36 @@ namespace PilotLang
                         else
                         {
                             yield return new StaticToken(TokenType.Minus, _linePos, _charPos);
+                        }
+                    }
+                    else if (Compare(TokenType.SingleEquals, nextChar))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.SingleEquals))
+                        {
+                            yield return new StaticToken(TokenType.EqualsEquals, _linePos, _charPos);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.SingleEquals, _linePos, _charPos);
+                        }
+                    }
+                    else if (Compare(TokenType.ExclamationMark, nextChar))
+                    {
+                        if (_inputBuffer.Length > 0)
+                        {
+                            yield return TokenizeInputBuffer();
+                        }
+                        if (MatchNextChar(TokenType.SingleEquals))
+                        {
+                            yield return new StaticToken(TokenType.ExclamationEquals, _linePos, _charPos);
+                        }
+                        else
+                        {
+                            yield return new StaticToken(TokenType.ExclamationMark, _linePos, _charPos);
                         }
                     }
                     else if (_forward.ContainsKey(nextChar + ""))

@@ -20,7 +20,9 @@ namespace PilotLang.Tokens
       [StringRepresentation("<")]
       LesserThan,
       [StringRepresentation("=")]
-      Assign,
+      SingleEquals,
+      [StringRepresentation("==")]
+      EqualsEquals,
       [StringRepresentation(">")]
       GreaterThan,
       LesserThanOrEqualTo,
@@ -63,6 +65,8 @@ namespace PilotLang.Tokens
       While,
       [StringRepresentation("!")]
       ExclamationMark,
+      [StringRepresentation("!=")]
+      ExclamationEquals,
       [StringRepresentation("in")]
       In,
       [StringRepresentation(":")]
@@ -73,6 +77,10 @@ namespace PilotLang.Tokens
       Decrement,
       [StringRepresentation("var")]
       VariableKeyword,
+      [StringRepresentation("struct")]
+      Struct,
+      [StringRepresentation("trait")]
+      Trait,
       [StringRepresentation("?")]
       QuestionMark,
       Identifier,

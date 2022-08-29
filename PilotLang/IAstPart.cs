@@ -5,20 +5,10 @@ namespace PilotLang
 {
     public interface IAstPart
     {
-
+        
     }
 
-    public class AstTopLevel : IAstPart
-    {
-        public IAstPart Child;
-
-        public AstTopLevel(IAstPart child)
-        {
-            Child = child;
-        }
-    }
-    
-    public struct BlockAst : IAstExpr
+    public struct BlockAst : IAstStatement
     {
         public List<IAstStatement> Statements;
 
@@ -44,10 +34,10 @@ namespace PilotLang
         public IAstType ReturnType;
         public IdentifierToken FunctionName;
         public List<(IdentifierToken, IAstType)> Arguments;
-        public IAstExpr FuncBody;
+        public BlockAst FuncBody;
 
         public FunctionAstPart(IAstType returnType, IdentifierToken functionName,
-            List<(IdentifierToken, IAstType)> arguments, IAstExpr funcBody)
+            List<(IdentifierToken, IAstType)> arguments, BlockAst funcBody)
         {
             ReturnType = returnType;
             FunctionName = functionName;
@@ -56,24 +46,33 @@ namespace PilotLang
         }
     }
 
+    public struct WhileLoopAstStatement : IAstStatement
+    {
+        public IAstExpr Check;
+        public BlockAst Block;
+
+        public WhileLoopAstStatement(IAstExpr check, BlockAst block)
+        {
+            Check = check;
+            Block = block;
+        }
+    }
+
     public interface IForLoopAstStatement : IAstStatement
     {
-        public IAstType IterType { get; }
         public IdentifierToken IterVar { get; }
         public BlockAst Block { get; }
     }
 
     public struct StatementShorthand1ForLoopAstStatement : IForLoopAstStatement
     {
-        public IAstType IterType { get; }
         public IdentifierToken IterVar { get; }
         public IAstExpr UpperBound;
         public BlockAst Block { get; }
         public bool IsLesserThan;
 
-        public StatementShorthand1ForLoopAstStatement(IAstType iterType, IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
+        public StatementShorthand1ForLoopAstStatement(IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
         {
-            IterType = iterType;
             IterVar = iterVar;
             UpperBound = upperBound;
             Block = block;
@@ -83,21 +82,53 @@ namespace PilotLang
     
     public struct StatementShorthand2ForLoopAstStatement : IForLoopAstStatement
     {
-        public IAstType IterType { get; }
         public IdentifierToken IterVar { get; }
         public IAstExpr UpperBound;
         public IAstExpr InitialValue;
         public BlockAst Block { get; }
         public bool IsLesserThan;
 
-        public StatementShorthand2ForLoopAstStatement(IAstExpr upperBound, IAstExpr initialValue, bool isLesserThan, IAstType iterType, IdentifierToken iterVar, BlockAst block)
+        public StatementShorthand2ForLoopAstStatement(IAstExpr upperBound, IAstExpr initialValue, bool isLesserThan, IdentifierToken iterVar, BlockAst block)
         {
             UpperBound = upperBound;
             InitialValue = initialValue;
             IsLesserThan = isLesserThan;
-            IterType = iterType;
             IterVar = iterVar;
             Block = block;
+        }
+    }
+
+
+    public interface IForEachAstStatement : IForLoopAstStatement
+    {
+        public IdentifierToken IterThough { get; }
+    }
+
+    public struct ForEachWithExplicitStatement : IForEachAstStatement
+    {
+        public IdentifierToken IterVar { get; }
+        public BlockAst Block { get; }
+        public IdentifierToken IterThough { get; }
+
+        public ForEachWithExplicitStatement(IdentifierToken iterVar, BlockAst block, IdentifierToken iterThough)
+        {
+            IterVar = iterVar;
+            Block = block;
+            IterThough = iterThough;
+        }
+    }
+    
+    public struct ForEachStatement : IForEachAstStatement
+    {
+        public IdentifierToken IterVar { get; }
+        public BlockAst Block { get; }
+        public IdentifierToken IterThough { get; }
+
+        public ForEachStatement(IdentifierToken iterVar, BlockAst block, IdentifierToken iterThough)
+        {
+            IterVar = iterVar;
+            Block = block;
+            IterThough = iterThough;
         }
     }
 
@@ -118,11 +149,11 @@ namespace PilotLang
 
     public struct ArrayType : IAstType
     {
-        public IAstType TypeName;
+        public IAstType InternalType;
 
-        public ArrayType(IAstType typeName)
+        public ArrayType(IAstType internalType)
         {
-            TypeName = typeName;
+            InternalType = internalType;
         }
     }
 
@@ -150,6 +181,7 @@ namespace PilotLang
 
     public interface IAstStatement : IAstPart
     {
+        
     }
 
     public struct ReturnAstStatement : IAstStatement
@@ -222,6 +254,18 @@ namespace PilotLang
             VarName = varName;
             VarValue = varValue;
             Op = op;
+        }
+    }
+
+    public struct TraitDeclaration : IAstPart
+    {
+        public IAstType Trait;
+        public List<FunctionAstPart> Funcs;
+
+        public TraitDeclaration(IAstType trait, List<FunctionAstPart> funcs)
+        {
+            Trait = trait;
+            Funcs = funcs;
         }
     }
 }
