@@ -106,13 +106,14 @@ namespace PilotLang
 
     public struct ForEachWithExplicitStatement : IForEachAstStatement
     {
-        public IdentifierToken IterVar { get; }
+        public VariableDeclarationAstStatement Declaration;
+        public IdentifierToken IterVar { get => Declaration.VarName; }
         public BlockAst Block { get; }
         public IdentifierToken IterThough { get; }
 
-        public ForEachWithExplicitStatement(IdentifierToken iterVar, BlockAst block, IdentifierToken iterThough)
+        public ForEachWithExplicitStatement(VariableDeclarationAstStatement declaration, BlockAst block, IdentifierToken iterThough)
         {
-            IterVar = iterVar;
+            Declaration = declaration;
             Block = block;
             IterThough = iterThough;
         }
