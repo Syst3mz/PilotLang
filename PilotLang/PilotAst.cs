@@ -224,11 +224,33 @@ namespace PilotLang
                         return IncrementerFsm();
                     }
                 }
-                else
+            }
+            else
+            {
+                if (!Expect(TokenType.LesserThan) || !Expect(TokenType.LesserThanOrEqualTo))
                 {
-                    
+                    bool isLesserThan = Expect(TokenType.LesserThan);
+                    Advance();
+
+                    IAstExpr validatorExpr = ParseExpr();
+                    if (!Match(TokenType.Semicolon))
+                    {
+                        throw new ParseError(_current, "Validator expr must end in a semicolon");
+                    }
+
+                    if (Expect(TokenType.LeftBrace))
+                    {
+                        return new StatementShorthand1ForLoopAstStatement(id, validatorExpr, ParseBlock(),
+                            isLesserThan);
+                    }
+                    else
+                    {
+                        return IncrementerFsm();
+                    }
                 }
             }
+
+            throw new ParseError(_current, "Some nonsense has occured");
         }
 
         private static IForLoopAstStatement IncrementerFsm()
