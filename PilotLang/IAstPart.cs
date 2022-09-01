@@ -64,35 +64,35 @@ namespace PilotLang
         public BlockAst Block { get; }
     }
 
-    public struct StatementShorthand1ForLoopAstStatement : IForLoopAstStatement
+    public struct ShorthandForLoopAstStatement : IForLoopAstStatement
     {
         public IdentifierToken IterVar { get; }
         public IAstExpr UpperBound;
         public BlockAst Block { get; }
         public bool IsLesserThan;
 
-        public StatementShorthand1ForLoopAstStatement(IdentifierToken iterVar, IAstExpr upperBound, BlockAst block, bool isLesserThan)
+        public ShorthandForLoopAstStatement(IAstExpr upperBound, bool isLesserThan, IdentifierToken iterVar, BlockAst block)
         {
-            IterVar = iterVar;
             UpperBound = upperBound;
-            Block = block;
             IsLesserThan = isLesserThan;
+            IterVar = iterVar;
+            Block = block;
         }
     }
     
-    public struct StatementShorthand2ForLoopAstStatement : IForLoopAstStatement
+    public struct ExplicitForLoopAstStatement : IForLoopAstStatement
     {
         public IdentifierToken IterVar { get; }
+        public BlockAst Block { get; }
         public IAstExpr UpperBound;
         public IAstExpr InitialValue;
-        public BlockAst Block { get; }
-        public bool IsLesserThan;
+        public IAstExpr Incrementer;
 
-        public StatementShorthand2ForLoopAstStatement(IAstExpr upperBound, IAstExpr initialValue, bool isLesserThan, IdentifierToken iterVar, BlockAst block)
+        public ExplicitForLoopAstStatement(IAstExpr upperBound, IAstExpr initialValue, IAstExpr incrementer, IdentifierToken iterVar, BlockAst block)
         {
             UpperBound = upperBound;
             InitialValue = initialValue;
-            IsLesserThan = isLesserThan;
+            Incrementer = incrementer;
             IterVar = iterVar;
             Block = block;
         }
@@ -104,29 +104,16 @@ namespace PilotLang
         public IdentifierToken IterThough { get; }
     }
 
-    public struct ForEachWithExplicitStatement : IForEachAstStatement
+    public struct ExplicitForEachStatement : IForEachAstStatement
     {
-        public VariableDeclarationAstStatement Declaration;
-        public IdentifierToken IterVar { get => Declaration.VarName; }
-        public BlockAst Block { get; }
-        public IdentifierToken IterThough { get; }
-
-        public ForEachWithExplicitStatement(VariableDeclarationAstStatement declaration, BlockAst block, IdentifierToken iterThough)
-        {
-            Declaration = declaration;
-            Block = block;
-            IterThough = iterThough;
-        }
-    }
-    
-    public struct ForEachStatement : IForEachAstStatement
-    {
+        public IAstType Type;
         public IdentifierToken IterVar { get; }
         public BlockAst Block { get; }
         public IdentifierToken IterThough { get; }
 
-        public ForEachStatement(IdentifierToken iterVar, BlockAst block, IdentifierToken iterThough)
+        public ExplicitForEachStatement(IAstType type, IdentifierToken iterVar, BlockAst block, IdentifierToken iterThough)
         {
+            Type = type;
             IterVar = iterVar;
             Block = block;
             IterThough = iterThough;

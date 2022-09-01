@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using PilotLang;
 
 namespace PilotInterpreter.Visitors
 {
     public class Interpreter : IExprVisitor<object>, ITopLevelVisitor<int>, IStatementVisitor<int>, ITypeVisitor<int>
     {
+        private Stack<Dictionary<string, IValue>> ScopedVariablesStack = new Stack<Dictionary<string, IValue>>();
+
         public object VisitIdentifier(IdentifierAstExpr ident)
         {
             throw new System.NotImplementedException();
@@ -17,7 +20,16 @@ namespace PilotInterpreter.Visitors
 
         public object VisitAssignment(AssignmentAstExpr assign)
         {
-            throw new System.NotImplementedException();
+            if (!ScopedVariablesStack.Peek().ContainsKey(assign.VarName.Text))
+            {
+                throw new RuntimeError($"{assign.VarName.Text} does not exist in current scope");
+            }
+            
+            switch (assign.Op)
+            {
+                case AssignmentAstExpr.OpCode.NoOp:
+                    ScopedVariablesStack.Peek()[assign.VarName.Text] = this.VisitExpr(assign.VarValue);
+            }
         }
 
         
@@ -36,7 +48,9 @@ namespace PilotInterpreter.Visitors
 
         public int VisitFunction(FunctionAstPart func)
         {
-            this.VisitBlock(func.FuncBody);
+            ScopedVariablesStack.Push(new Dictionary<string, IValue>());
+            VisitBlock(func.FuncBody);
+            ScopedVariablesStack.Pop();
             return 0;
         }
 
@@ -84,6 +98,39 @@ namespace PilotInterpreter.Visitors
         public int VisitGenericType(GenericType gt)
         {
             throw new System.NotImplementedException();
+        }
+    }
+
+    public interface IInterpreterValue
+    {
+        IInterpreterValue From(object o);
+    }
+
+    public class InterpreterInt : IInterpreterValue
+    {
+        public int Inside;
+
+        public InterpreterInt(int inside)
+        {
+            Inside = inside;
+        }
+
+        public IInterpreterValue From(object o)
+        {
+            if (o is )
+            {
+                throw new NotImplementedException();
+            }
+        }
+    }
+
+    public class RuntimeError : Exception
+    {
+        public string ErrorText;
+
+        public RuntimeError(string errorText)
+        {
+            ErrorText = errorText;
         }
     }
 }

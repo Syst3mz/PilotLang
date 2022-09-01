@@ -66,6 +66,14 @@ namespace PilotLang
             }
         }
         
+        private static void Retreat()
+        {
+            if (_positionInTokenArray - 1 >= 0)
+            {
+                _positionInTokenArray--;
+            }
+        }
+        
         private static List<IAstPart> ParseFile()
         {
             var ret = new List<IAstPart>();
@@ -143,126 +151,77 @@ namespace PilotLang
 
                 return new WhileLoopAstStatement(check, block);
             }
-            if (Expect(TokenType.For))
+            if (Match(TokenType.For))
             {
-                return EnterForFsm();
+                if (Expect(TokenType.Identifier))
+                {
+                    var id = (IdentifierToken)_current;
+                    Advance();
+                    if (Expect(TokenType.LesserThan) || Expect(TokenType.LesserThanOrEqualTo))
+                    {
+                        bool lessThan = Expect(TokenType.LesserThan);
+                        Advance();
+                        IAstExpr upperBound = ParseExpr();
+                        return new ShorthandForLoopAstStatement(upperBound, lessThan, id, ParseBlock());
+                    }
+                    else if (Match(TokenType.SingleEquals))
+                    {
+                        IAstExpr initializer = ParseExpr();
+                        if (!Match(TokenType.Semicolon))
+                        {
+                            throw new ParseError(_current, "Initializer must be followed by a semicolon");
+                        }
+
+                        IAstExpr upperBound = ParseExpr();
+                        if (!Match(TokenType.Semicolon))
+                        {
+                            throw new ParseError(_current, "Upper bound must be followed by a semicolon");
+                        }
+
+                        IAstExpr incrementer = ParseExpr();
+                        Match(TokenType.Semicolon);
+
+                        return new ExplicitForLoopAstStatement(upperBound, initializer, incrementer, id, ParseBlock());
+                    }
+                    else
+                    {
+                        throw new ParseError(_current, "Expected one of \"=\", \"<\", \"<=\"");
+                    }
+                }
+                else if (Match(TokenType.VariableKeyword))
+                {
+                    if (!Expect(TokenType.Identifier))
+                    {
+                        throw new ParseError(_lastToken, "Var must be followed by a identifier");
+                    }
+
+                    IdentifierToken id = (IdentifierToken)_current;
+                    IAstType varType = ParseType();
+                    Advance();
+                    if (!Match(TokenType.In))
+                    {
+                        throw new ParseError(_current, $"Expected in after variable declaration, found {_current}");
+                    }
+
+                    if (!Expect(TokenType.Identifier))
+                    {
+                        throw new ParseError(_current, "In must be followed by an identifier");
+                    }
+
+                    IdentifierToken iterable = (IdentifierToken)_current;
+                    Advance();
+
+                    return new ExplicitForEachStatement(varType, id, ParseBlock(), iterable);
+                }
+
+                throw new ParseError(_current, $"Unexpected {_current} token found after for");
             }
             else
             {
                 return ParseExprStatement();
             }
         }
-
-        private static IForLoopAstStatement EnterForFsm()
-        {
-            if (Match(TokenType.VariableKeyword))
-            {
-                return VarKeywordFsm();
-            }
-            else if (Expect(TokenType.Identifier))
-            {
-                return IdentFsm();
-            }
-            else
-            {
-                throw new ParseError(_lastToken, "For loop expects a variable or a identifier");
-            }
-        }
-
-        private static IForLoopAstStatement IdentFsm()
-        {
-            IdentifierToken id = (IdentifierToken)_current;
-            Advance();
-
-            if (Match(TokenType.In))
-            {
-                if (!Expect(TokenType.Identifier))
-                {
-                    throw new ParseError(_current, "in must be followed by a identifier");
-                }
-
-                IdentifierToken iterThrough = (IdentifierToken)_current;
-                Advance();
-                return new ForEachStatement(id, ParseBlock(), iterThrough);
-            }
-            else if (Match(TokenType.SingleEquals))
-            {
-                IAstExpr initializerValue = ParseExpr();
-                if (!Match(TokenType.Semicolon))
-                {
-                    throw new ParseError(_current, "for initializer statement must end in a \";\"");
-                }
-
-                return ComparisonFsm(id, initializerValue);
-            }
-
-            return ComparisonFsm(id);
-        }
-
-        private static IForLoopAstStatement ComparisonFsm(IdentifierToken id, IAstExpr initializerValue=null)
-        {
-            if (initializerValue == null)
-            {
-                if (!Expect(TokenType.LesserThan) || !Expect(TokenType.LesserThanOrEqualTo))
-                {
-                    bool isLesserThan = Expect(TokenType.LesserThan);
-                    Advance();
-
-                    IAstExpr validatorExpr = ParseExpr();
-                    if (!Match(TokenType.Semicolon))
-                    {
-                        throw new ParseError(_current, "Validator expr must end in a semicolon");
-                    }
-
-                    if (Expect(TokenType.LeftBrace))
-                    {
-                        return new StatementShorthand1ForLoopAstStatement(id, validatorExpr, ParseBlock(),
-                            isLesserThan);
-                    }
-                    else
-                    {
-                        return IncrementerFsm();
-                    }
-                }
-            }
-            else
-            {
-                if (!Expect(TokenType.LesserThan) || !Expect(TokenType.LesserThanOrEqualTo))
-                {
-                    bool isLesserThan = Expect(TokenType.LesserThan);
-                    Advance();
-
-                    IAstExpr validatorExpr = ParseExpr();
-                    if (!Match(TokenType.Semicolon))
-                    {
-                        throw new ParseError(_current, "Validator expr must end in a semicolon");
-                    }
-
-                    if (Expect(TokenType.LeftBrace))
-                    {
-                        return new StatementShorthand1ForLoopAstStatement(id, validatorExpr, ParseBlock(),
-                            isLesserThan);
-                    }
-                    else
-                    {
-                        return IncrementerFsm();
-                    }
-                }
-            }
-
-            throw new ParseError(_current, "Some nonsense has occured");
-        }
-
-        private static IForLoopAstStatement IncrementerFsm()
-        {
-            throw new NotImplementedException();
-        }
-
-        private static IForLoopAstStatement VarKeywordFsm()
-        {
-            throw new NotImplementedException();
-        }
-
+        
         private static (bool, IAstExpr) GetForLoopUpperBound()
         {
             bool lessThan = Expect(TokenType.LesserThan);
