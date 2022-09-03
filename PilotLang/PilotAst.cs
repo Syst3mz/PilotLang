@@ -83,11 +83,41 @@ namespace PilotLang
                 {
                     ret.Add(ParseFunction());
                 }
+                else if (Expect(TokenType.Struct))
+                {
+                    ret.Add(ParseStruct());
+                }
+                else if (Expect(TokenType.Trait))
+                {
+                    ret.Add(ParseTrait());
+                }
+                else
+                {
+                    ret.Add(ParseEnum());
+                }
 
                 Advance();
             }
 
             return ret;
+        }
+
+        private static IAstPart ParseEnum()
+        {
+            if (!Expect(TokenType.Identifier))
+            {
+                
+            }
+        }
+
+        private static IAstPart ParseTrait()
+        {
+            throw new NotImplementedException();
+        }
+
+        private static IAstPart ParseStruct()
+        {
+            throw new NotImplementedException();
         }
 
         private static FunctionAstPart ParseFunction()

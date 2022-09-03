@@ -69,8 +69,6 @@ namespace PilotLang.Tokens
       ExclamationEquals,
       [StringRepresentation("in")]
       In,
-      [StringRepresentation(":")]
-      Colon,
       [StringRepresentation("++")]
       Increment,
       [StringRepresentation("--")]
@@ -83,6 +81,18 @@ namespace PilotLang.Tokens
       Trait,
       [StringRepresentation("?")]
       QuestionMark,
+      [StringRepresentation("if")]
+      If,
+      [StringRepresentation("set")]
+      Get,
+      [StringRepresentation("set")]
+      Set,
+      [StringRepresentation("enum")]
+      Enum,
+      [StringRepresentation("=>")]
+      EqualsLesserThan,
+      [StringRepresentation("match")]
+      Match,
       Identifier,
       Integer
    }

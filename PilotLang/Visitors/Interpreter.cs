@@ -4,43 +4,55 @@ using PilotLang;
 
 namespace PilotInterpreter.Visitors
 {
-    public class Interpreter : IExprVisitor<object>, ITopLevelVisitor<int>, IStatementVisitor<int>, ITypeVisitor<int>
+    public class Interpreter : IExprVisitor<IInterpreterValue>, ITopLevelVisitor<int>, IStatementVisitor<int>, ITypeVisitor<int>
     {
-        private Stack<Dictionary<string, IValue>> ScopedVariablesStack = new Stack<Dictionary<string, IValue>>();
+        private List<Dictionary<string, IInterpreterValue>> _scopedVariablesStack = new List<Dictionary<string, IInterpreterValue>>();
 
-        public object VisitIdentifier(IdentifierAstExpr ident)
+        public IInterpreterValue VisitIdentifier(IdentifierAstExpr ident)
         {
-            throw new System.NotImplementedException();
+            foreach (var scope in _scopedVariablesStack)
+            {
+                if (scope.ContainsKey(ident.Token.Text))
+                {
+                    return scope[ident.Token.Text];
+                }
+            }
+
+            throw new RuntimeError($"{ident.Token.Text} not found in scope.");
         }
 
-        public object VisitInteger(IntegerAstExpr integer)
+        public IInterpreterValue VisitInteger(IntegerAstExpr integer)
         {
-            return integer.Token.Number;
+            return new InterpreterInt(integer.Token.Number);
         }
 
-        public object VisitAssignment(AssignmentAstExpr assign)
+        public IInterpreterValue VisitAssignment(AssignmentAstExpr assign)
         {
-            if (!ScopedVariablesStack.Peek().ContainsKey(assign.VarName.Text))
+            foreach (var scope in _scopedVariablesStack)
             {
-                throw new RuntimeError($"{assign.VarName.Text} does not exist in current scope");
+                if (scope.ContainsKey(assign.VarName.Text))
+                {
+                    switch (assign.Op)
+                    {
+                        case AssignmentAstExpr.OpCode.NoOp:
+                            scope[assign.VarName.Text] = this.VisitExpr(assign.VarValue);
+                            break;
+                    }
+                }
             }
-            
-            switch (assign.Op)
-            {
-                case AssignmentAstExpr.OpCode.NoOp:
-                    ScopedVariablesStack.Peek()[assign.VarName.Text] = this.VisitExpr(assign.VarValue);
-            }
+
+            throw new RuntimeError($"{assign.VarName} not found in scope.");
         }
 
         
-        public object VisitBinaryExpr(BinaryAstExpr astExpr)
+        public IInterpreterValue VisitBinaryExpr(BinaryAstExpr astExpr)
         {
             switch (astExpr.Op)
             {
                 case TwoUnitOp.Plus:
-                    return (int)this.VisitExpr(astExpr.Left) + (int)this.VisitExpr(astExpr.Right);
+                    throw new NotImplementedException();
                 case TwoUnitOp.Divide:
-                    return (int)this.VisitExpr(astExpr.Left) / (int)this.VisitExpr(astExpr.Right);
+                    throw new NotImplementedException();
                 default:
                     throw new NotImplementedException();
             }
@@ -48,18 +60,18 @@ namespace PilotInterpreter.Visitors
 
         public int VisitFunction(FunctionAstPart func)
         {
-            ScopedVariablesStack.Push(new Dictionary<string, IValue>());
             VisitBlock(func.FuncBody);
-            ScopedVariablesStack.Pop();
             return 0;
         }
 
         public int VisitBlock(BlockAst block)
         {
+            _scopedVariablesStack.Insert(0, new Dictionary<string, IInterpreterValue>());
             foreach (var statement in block.Statements)
             {
                 this.VisitStatement(statement);
             }
+            _scopedVariablesStack.RemoveAt(0);
 
             return 0;
         }
@@ -103,10 +115,17 @@ namespace PilotInterpreter.Visitors
 
     public interface IInterpreterValue
     {
-        IInterpreterValue From(object o);
     }
 
-    public class InterpreterInt : IInterpreterValue
+    public interface INumericValue : IInterpreterValue
+    {
+        public INumericValue Add(INumericValue n);
+        public INumericValue Subtract(INumericValue n);
+        public INumericValue Multiply(INumericValue n);
+        public INumericValue Divide(INumericValue n);
+    }
+
+    public class InterpreterInt : INumericValue
     {
         public int Inside;
 
@@ -115,12 +134,24 @@ namespace PilotInterpreter.Visitors
             Inside = inside;
         }
 
-        public IInterpreterValue From(object o)
+        public INumericValue Add(INumericValue n)
         {
-            if (o is )
-            {
-                throw new NotImplementedException();
-            }
+            throw new NotImplementedException();
+        }
+
+        public INumericValue Subtract(INumericValue n)
+        {
+            throw new NotImplementedException();
+        }
+
+        public INumericValue Multiply(INumericValue n)
+        {
+            throw new NotImplementedException();
+        }
+
+        public INumericValue Divide(INumericValue n)
+        {
+            throw new NotImplementedException();
         }
     }
 

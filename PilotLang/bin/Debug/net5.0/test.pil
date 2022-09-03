@@ -1,8 +1,13 @@
 ﻿fn int Main() {
+    if i < 10 {
+    }
+    
     var sum int = 0;
     for i < 15 {
         sum++;
     }
+    
+    
     
     return 0;
 }
