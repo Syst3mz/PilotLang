@@ -256,4 +256,35 @@ namespace PilotLang
             Funcs = funcs;
         }
     }
+
+    public interface IEnum : IAstPart
+    {
+        public IdentifierToken Name { get; }
+    }
+
+    public struct GenericEnum : IEnum
+    {
+        public IdentifierToken Name { get; }
+        public List<IdentifierToken> TypeArgs;
+        public Dictionary<IdentifierToken, List<IdentifierToken>> Fields;
+
+        public GenericEnum(List<IdentifierToken> typeArgs, Dictionary<IdentifierToken, List<IdentifierToken>> fields, IdentifierToken name)
+        {
+            TypeArgs = typeArgs;
+            Fields = fields;
+            Name = name;
+        }
+    }
+
+    public struct Enum : IEnum
+    {
+        public IdentifierToken Name { get; }
+        public List<IdentifierToken> Fields;
+
+        public Enum(List<IdentifierToken> fields, IdentifierToken name)
+        {
+            Fields = fields;
+            Name = name;
+        }
+    }
 }

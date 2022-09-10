@@ -25,7 +25,9 @@ namespace PilotLang.Tokens
       EqualsEquals,
       [StringRepresentation(">")]
       GreaterThan,
+      [StringRepresentation("<=")]
       LesserThanOrEqualTo,
+      [StringRepresentation(">=")]
       GreaterThanOrEqualTo,
       [StringRepresentation("[")]
       LeftBracket,

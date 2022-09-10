@@ -106,7 +106,46 @@ namespace PilotLang
         {
             if (!Expect(TokenType.Identifier))
             {
+                throw new ParseError(_current, $"Expected a identifier after an enum but found {_current}");
+            }
+
+            IdentifierToken id = (IdentifierToken)_current;
+            Advance();
+            if (Match(TokenType.LesserThan))
+            {
+                List<IdentifierToken> typeArgs = new List<IdentifierToken>();
+                while (!Match(TokenType.GreaterThan))
+                {
+                    if (Expect(TokenType.Identifier))
+                    {
+                        typeArgs.Add((IdentifierToken)_current);
+                        Advance();
+                        if (!Match(TokenType.Comma) || !Expect(TokenType.LeftBrace))
+                        {
+                            throw new ParseError(_current, "Expected comma after identifier");
+                        }
+                    }
+                    else
+                    {
+                        throw new ParseError(_current, "Expected a type argument for generic enum");
+                    }
+                }
                 
+                // handle generic shit
+            }
+            else if (Match(TokenType.LeftBrace))
+            {
+                while (!Match(TokenType.RightBrace))
+                {
+                    if (Expect(TokenType.Identifier))
+                    {
+                        
+                    }                    
+                }
+            }
+            else
+            {
+                throw new ParseError(_current, $"Unexpected token {_current}");
             }
         }
 
