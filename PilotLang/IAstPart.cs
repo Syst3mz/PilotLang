@@ -248,27 +248,29 @@ namespace PilotLang
     public struct TraitDeclaration : IAstPart
     {
         public IAstType Trait;
+        public List<VariableDeclarationAstStatement> Fields;
         public List<FunctionAstPart> Funcs;
 
-        public TraitDeclaration(IAstType trait, List<FunctionAstPart> funcs)
+        public TraitDeclaration(IAstType trait, List<VariableDeclarationAstStatement> fields, List<FunctionAstPart> funcs)
         {
             Trait = trait;
+            Fields = fields;
             Funcs = funcs;
         }
     }
 
-    public interface IEnum : IAstPart
+    public interface IEnumAstPart : IAstPart
     {
         public IdentifierToken Name { get; }
     }
 
-    public struct GenericEnum : IEnum
+    public struct GenericEnum : IEnumAstPart
     {
         public IdentifierToken Name { get; }
         public List<IdentifierToken> TypeArgs;
-        public Dictionary<IdentifierToken, List<IdentifierToken>> Fields;
+        public List<(IdentifierToken, List<IdentifierToken>)> Fields;
 
-        public GenericEnum(List<IdentifierToken> typeArgs, Dictionary<IdentifierToken, List<IdentifierToken>> fields, IdentifierToken name)
+        public GenericEnum(List<IdentifierToken> typeArgs, List<(IdentifierToken, List<IdentifierToken>)> fields, IdentifierToken name)
         {
             TypeArgs = typeArgs;
             Fields = fields;
@@ -276,12 +278,12 @@ namespace PilotLang
         }
     }
 
-    public struct Enum : IEnum
+    public struct SimpleEnum : IEnumAstPart
     {
         public IdentifierToken Name { get; }
         public List<IdentifierToken> Fields;
 
-        public Enum(List<IdentifierToken> fields, IdentifierToken name)
+        public SimpleEnum(List<IdentifierToken> fields, IdentifierToken name)
         {
             Fields = fields;
             Name = name;

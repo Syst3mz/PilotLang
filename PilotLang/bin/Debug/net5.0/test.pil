@@ -1,13 +1,13 @@
-﻿fn int Main() {
-    if i < 10 {
-    }
-    
-    var sum int = 0;
-    for i < 15 {
-        sum++;
-    }
-    
-    
-    
+﻿fn int main() {
     return 0;
+}
+
+enum NetworkMode2<T> {
+    TCP(T),
+    UDP(T)
+}
+
+enum Color {
+    Red,
+    Blue
 }

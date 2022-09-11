@@ -91,63 +91,131 @@ namespace PilotLang
                 {
                     ret.Add(ParseTrait());
                 }
-                else
+                else if (Expect(TokenType.Enum))
                 {
                     ret.Add(ParseEnum());
                 }
-
-                Advance();
+                else
+                {
+                    throw new ParseError(_current, $"Top level statements must be a function, struct, trait or enum. Found {_current}");
+                }
             }
 
             return ret;
         }
 
-        private static IAstPart ParseEnum()
+        private static IEnumAstPart ParseEnum()
         {
-            if (!Expect(TokenType.Identifier))
+            if (!Match(TokenType.Enum))
             {
-                throw new ParseError(_current, $"Expected a identifier after an enum but found {_current}");
+                throw new ParseError(_current, "Expected to find Enum, but did not find enum");
             }
 
-            IdentifierToken id = (IdentifierToken)_current;
+            if (!Expect(TokenType.Identifier))
+            {
+                throw new ParseError(_current, $"Expected enum name found {_current}");
+            }
+            IdentifierToken enumName = (IdentifierToken)_current;
             Advance();
+            
             if (Match(TokenType.LesserThan))
             {
                 List<IdentifierToken> typeArgs = new List<IdentifierToken>();
                 while (!Match(TokenType.GreaterThan))
                 {
-                    if (Expect(TokenType.Identifier))
+                    if (!Expect(TokenType.Identifier))
                     {
-                        typeArgs.Add((IdentifierToken)_current);
-                        Advance();
-                        if (!Match(TokenType.Comma) || !Expect(TokenType.LeftBrace))
+                        throw new ParseError(_current, $"Expected a identifier, found {_current}");
+                    }
+                    typeArgs.Add((IdentifierToken)_current);
+                    Advance();
+
+                    if (!Match(TokenType.Comma) && !Expect(TokenType.GreaterThan))
+                    {
+                        throw new ParseError(_current, "Type argument must be followed by a \",\" or a \">\"");
+                    }
+                }
+
+                if (!Match(TokenType.LeftBrace))
+                {
+                    throw new ParseError(_current, "Expected " + "\"{\" after enum name, " + $"found {_current}");
+                }
+
+                List<(IdentifierToken, List<IdentifierToken>)> variants =
+                    new List<(IdentifierToken, List<IdentifierToken>)>();
+                while (!Match(TokenType.RightBrace))
+                {
+                    if (!Expect(TokenType.Identifier))
+                    {
+                        throw new ParseError(_current, $"Expected identifier found {_current}");
+                    }
+
+                    IdentifierToken name = (IdentifierToken)_current;
+                    Advance();
+
+                    if (Match(TokenType.LeftParentheses))
+                    {
+                        List<IdentifierToken> variantTypeArgs = new List<IdentifierToken>();
+                        while (!Match(TokenType.RightParentheses))
                         {
-                            throw new ParseError(_current, "Expected comma after identifier");
+                            if (!Expect(TokenType.Identifier))
+                            {
+                                throw new ParseError(_current, $"Expected a type argument, found {_current}");
+                            }
+                            variantTypeArgs.Add((IdentifierToken)_current);
+                            Advance();
+                            
+                            if (!Match(TokenType.Comma) && !Expect(TokenType.RightParentheses))
+                            {
+                                throw new ParseError(_current, $"Expected comma or end of type argument list. Found {_current}");
+                            }
+
+                            if (Match(TokenType.RightParentheses))
+                            {
+                                break;
+                            }
                         }
+                        variants.Add((name, variantTypeArgs));
                     }
                     else
                     {
-                        throw new ParseError(_current, "Expected a type argument for generic enum");
+                        variants.Add((name, new List<IdentifierToken>()));
+                    }
+
+                    if (!Match(TokenType.Comma) && !Expect(TokenType.RightBrace))
+                    {
+                        throw new ParseError(_current, $"Type list is expected to be delineated by commas, found {_current}");
                     }
                 }
-                
-                // handle generic shit
+
+                return new GenericEnum(typeArgs, variants, enumName);
             }
-            else if (Match(TokenType.LeftBrace))
+
+            if (!Match(TokenType.LeftBrace))
             {
-                while (!Match(TokenType.RightBrace))
+                throw new ParseError(_current, "Expected " + "\"{\" " + $"found {_current}");
+            }
+
+            List<IdentifierToken> simpleVariants = new List<IdentifierToken>();
+            while (!Match(TokenType.RightBrace))
+            {
+                if (!Expect(TokenType.Identifier))
                 {
-                    if (Expect(TokenType.Identifier))
-                    {
-                        
-                    }                    
+                    throw new ParseError(_current, $"Expected variant name, found {_current}");
+                }
+                simpleVariants.Add((IdentifierToken)_current);
+                Advance();
+
+                if (!Match(TokenType.Comma) && !Expect(TokenType.RightBrace))
+                {
+                    throw new ParseError(_current, "Expected \",\" or \"}\" but found " + $"{_current}");
                 }
             }
-            else
-            {
-                throw new ParseError(_current, $"Unexpected token {_current}");
-            }
+
+            return new SimpleEnum(simpleVariants, enumName);
         }
+        
+        
 
         private static IAstPart ParseTrait()
         {
@@ -305,7 +373,7 @@ namespace PilotLang
             ExprStatement exprStatement = new ExprStatement(ParseExpr());
             if (!Match(TokenType.Semicolon))
             {
-                throw new ParseError(_lastToken,"Statement must end with a ;");
+                throw new ParseError(_lastToken,$"Statement must end with a \";\" found {_current}");
             }
 
             return exprStatement;
@@ -318,7 +386,7 @@ namespace PilotLang
 
         private static IAstExpr ParseExpr()
         {
-            return ParseExprOr();
+            return ParseAssignment();
         }
 
         private static VariableDeclarationAstStatement ParseDeclaration()
@@ -349,6 +417,30 @@ namespace PilotLang
             }
 
             throw new ParseError(_current, "Variable must be followed by a \";\" or an \"=\" expression");
+        }
+
+        private static IAstExpr ParseAssignment()
+        {
+            IAstExpr maybeAssignment = ParseExprOr();
+            if (maybeAssignment is IdentifierAstExpr idAe)
+            {
+                IdentifierToken id = idAe.Token;
+                
+                AssignmentAstExpr.OpCode code;
+                switch (_current.Type)
+                {
+                    case TokenType.SingleEquals:
+                        code = AssignmentAstExpr.OpCode.NoOp;
+                        break;
+                    default:
+                        return maybeAssignment;
+                }
+                Advance();
+
+                return new AssignmentAstExpr(id, ParseAssignment(), code);
+            }
+
+            return maybeAssignment;
         }
 
         private static IAstExpr ParseExprOr()
