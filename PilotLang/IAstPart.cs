@@ -266,24 +266,24 @@ namespace PilotLang
     {
         public IdentifierToken Name { get; }
         public List<IdentifierToken> TypeArgs;
-        public Dictionary<IdentifierToken, List<IdentifierToken>> Fields;
+        public List<(IdentifierToken, List<IdentifierToken>)> Variants;
 
-        public GenericEnum(List<IdentifierToken> typeArgs, Dictionary<IdentifierToken, List<IdentifierToken>> fields, IdentifierToken name)
+        public GenericEnum(List<IdentifierToken> typeArgs, List<(IdentifierToken, List<IdentifierToken>)> variants, IdentifierToken name)
         {
             TypeArgs = typeArgs;
-            Fields = fields;
+            Variants = variants;
             Name = name;
         }
     }
-
+    
     public struct Enum : IEnum
     {
         public IdentifierToken Name { get; }
-        public List<IdentifierToken> Fields;
+        public List<(IdentifierToken, List<IdentifierToken>)> Variants;
 
-        public Enum(List<IdentifierToken> fields, IdentifierToken name)
+        public Enum(List<(IdentifierToken, List<IdentifierToken>)> variants, IdentifierToken name)
         {
-            Fields = fields;
+            Variants = variants;
             Name = name;
         }
     }

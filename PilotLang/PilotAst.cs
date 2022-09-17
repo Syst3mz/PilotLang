@@ -94,6 +94,7 @@ namespace PilotLang
                 else
                 {
                     ret.Add(ParseEnum());
+                    Retreat();
                 }
 
                 Advance();
@@ -104,49 +105,110 @@ namespace PilotLang
 
         private static IAstPart ParseEnum()
         {
-            if (!Expect(TokenType.Identifier))
+            if (Match(TokenType.Enum))
             {
-                throw new ParseError(_current, $"Expected a identifier after an enum but found {_current}");
-            }
-
-            IdentifierToken id = (IdentifierToken)_current;
-            Advance();
-            if (Match(TokenType.LesserThan))
-            {
-                List<IdentifierToken> typeArgs = new List<IdentifierToken>();
-                while (!Match(TokenType.GreaterThan))
+                if (!Expect(TokenType.Identifier))
                 {
-                    if (Expect(TokenType.Identifier))
+                    throw new ParseError(_current, $"Expected a identifier after an enum but found {_current}");
+                }
+
+                IdentifierToken id = (IdentifierToken)_current;
+                Advance();
+                List<IdentifierToken> typeArgs = new List<IdentifierToken>();
+                if (Match(TokenType.LesserThan))
+                {
+                    while (!Match(TokenType.GreaterThan))
                     {
-                        typeArgs.Add((IdentifierToken)_current);
-                        Advance();
-                        if (!Match(TokenType.Comma) || !Expect(TokenType.LeftBrace))
+                        if (Expect(TokenType.Identifier))
                         {
-                            throw new ParseError(_current, "Expected comma after identifier");
+                            typeArgs.Add((IdentifierToken)_current);
+                            Advance();
+                            if (!Match(TokenType.Comma) && !Expect(TokenType.GreaterThan))
+                            {
+                                throw new ParseError(_current, $"Expected comma after identifier but found {_current}");
+                            }
+
+                            if (Match(TokenType.GreaterThan))
+                            {
+                                break;
+                            }
                         }
+                        else
+                        {
+                            throw new ParseError(_current, "Expected a type argument for generic enum");
+                        }
+                    }
+                }
+
+                List<(IdentifierToken, List<IdentifierToken>)> variantNames = new List<(IdentifierToken, List<IdentifierToken>)>();
+                if (Match(TokenType.LeftBrace))
+                {
+                    while (!Match(TokenType.RightBrace))
+                    {
+                        if (!Expect(TokenType.Identifier))
+                        {
+                            throw new ParseError(_current, $"Expected a enum variant but found {_current}");
+                        }
+
+                        IdentifierToken variant = (IdentifierToken)_current;
+                        Advance();
+                    
+                        List<IdentifierToken> values = new List<IdentifierToken>();
+                        if (Match(TokenType.LeftParentheses))
+                        {
+                            while (!Match(TokenType.RightParentheses))
+                            {
+                                if (!Expect(TokenType.Identifier))
+                                {
+                                    throw new ParseError(_current, $"Expected a value arg to {variant} but found {_current}");
+                                }
+                                values.Add((IdentifierToken)_current);
+                                Advance();
+
+                                if (!Match(TokenType.Comma) && !Expect(TokenType.RightParentheses) )
+                                {
+                                    throw new ParseError(_current, $"Expected a \",\" or a \")\" but found {_current}");
+                                }
+
+                                if (Match(TokenType.RightParentheses))
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    
+                        variantNames.Add((variant, values));
+                    
+                        if (!Match(TokenType.Comma) && !Expect(TokenType.RightBrace) )
+                        {
+                            throw new ParseError(_current, "Expected a \",\" or a \"}\" but found " + _current);
+                        }
+
+                        if (Match(TokenType.RightBrace))
+                        {
+                            break;
+                        }
+                    }
+
+                    if (typeArgs.Count > 0)
+                    {
+                        return new GenericEnum(typeArgs, variantNames, id);
                     }
                     else
                     {
-                        throw new ParseError(_current, "Expected a type argument for generic enum");
+                        return new Enum(variantNames, id);
                     }
                 }
-                
-                // handle generic shit
-            }
-            else if (Match(TokenType.LeftBrace))
-            {
-                while (!Match(TokenType.RightBrace))
+                else
                 {
-                    if (Expect(TokenType.Identifier))
-                    {
-                        
-                    }                    
+                    throw new ParseError(_current, $"Unexpected token {_current}");
                 }
             }
             else
             {
-                throw new ParseError(_current, $"Unexpected token {_current}");
+                throw new ParseError(_current, $"Expected enum, found {_current}");
             }
+            
         }
 
         private static IAstPart ParseTrait()

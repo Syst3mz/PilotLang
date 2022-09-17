@@ -85,7 +85,7 @@ namespace PilotLang.Tokens
       QuestionMark,
       [StringRepresentation("if")]
       If,
-      [StringRepresentation("set")]
+      [StringRepresentation("get")]
       Get,
       [StringRepresentation("set")]
       Set,
